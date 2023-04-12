@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.analysis.providers.createPackageProvider
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.caches.FirCache
 import org.jetbrains.kotlin.fir.caches.firCachesFactory
+import org.jetbrains.kotlin.fir.caches.getValue
 import org.jetbrains.kotlin.fir.declarations.FirDeclarationOrigin
 import org.jetbrains.kotlin.fir.deserialization.SingleModuleDataProvider
 import org.jetbrains.kotlin.fir.java.deserialization.KotlinBuiltins
@@ -28,7 +29,6 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.stubs.impl.*
 import org.jetbrains.kotlin.resolve.jvm.JvmClassName
 import org.jetbrains.kotlin.utils.addToStdlib.ifNotEmpty
-import org.jetbrains.kotlin.fir.caches.getValue
 
 typealias DeserializedTypeAliasPostProcessor = (FirTypeAliasSymbol) -> Unit
 
@@ -57,6 +57,9 @@ internal open class StubBasedFirDeserializedSymbolProvider(
     final override val declarationProvider = project.createDeclarationProvider(scope, module = null)
 
     override val symbolNamesProvider: FirSymbolNamesProvider = LLFirKotlinSymbolNamesProvider.cached(session, declarationProvider)
+
+    // TODO (marco): Is this correct?
+    override val allowKotlinPackage: Boolean get() = true
 
     private val typeAliasCache: FirCache<ClassId, FirTypeAliasSymbol?, StubBasedFirDeserializationContext?> =
         session.firCachesFactory.createCacheWithPostCompute(
