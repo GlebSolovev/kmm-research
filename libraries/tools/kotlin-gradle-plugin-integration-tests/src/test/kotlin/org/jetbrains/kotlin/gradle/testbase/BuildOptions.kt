@@ -72,7 +72,7 @@ data class BuildOptions(
     )
 
     data class NativeOptions(
-        val cacheKind: NativeCacheKind = NativeCacheKind.NONE,
+        val cacheKind: NativeCacheKind? = NativeCacheKind.NONE,
         val cocoapodsGenerateWrapper: Boolean? = null,
         val cocoapodsPlatform: String? = null,
         val cocoapodsConfiguration: String? = null,
@@ -216,7 +216,9 @@ data class BuildOptions(
         arguments: MutableList<String>,
     ) {
 
-        arguments.add("-Pkotlin.native.cacheKind=${nativeOptions.cacheKind.name.lowercase()}")
+        nativeOptions.cacheKind?.let {
+            arguments.add("-Pkotlin.native.cacheKind=${nativeOptions.cacheKind.name.lowercase()}")
+        }
 
         nativeOptions.cocoapodsGenerateWrapper?.let {
             arguments.add("-Pkotlin.native.cocoapods.generate.wrapper=${it}")
