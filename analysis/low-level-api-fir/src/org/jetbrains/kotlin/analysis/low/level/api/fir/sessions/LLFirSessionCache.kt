@@ -7,10 +7,11 @@ package org.jetbrains.kotlin.analysis.low.level.api.fir.sessions
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
-import com.intellij.util.containers.CollectionFactory
 import org.jetbrains.kotlin.analysis.low.level.api.fir.LLFirInternals
+import org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.LLFirSession.LLFirSessionCleaner
 import org.jetbrains.kotlin.analysis.low.level.api.fir.util.checkCanceled
 import org.jetbrains.kotlin.analysis.project.structure.*
+import org.jetbrains.kotlin.analysis.utils.collections.createConcurrentSoftValueMapWithCleanup
 import org.jetbrains.kotlin.fir.FirModuleDataImpl
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.PrivateSessionConstructor
@@ -33,8 +34,10 @@ class LLFirSessionCache(private val project: Project) {
         }
     }
 
-    private val sourceCache: SessionStorage = CollectionFactory.createConcurrentSoftValueMap()
-    private val binaryCache: SessionStorage = CollectionFactory.createConcurrentSoftValueMap()
+    // Removal from the session storage invokes the `LLFirSessionCleaner`, which marks the session as invalid and disposes any disposables
+    // registered with the `LLFirSession`'s disposable.
+    private val sourceCache: SessionStorage = createConcurrentSoftValueMapWithCleanup { LLFirSessionCleaner(it.disposable) }
+    private val binaryCache: SessionStorage = createConcurrentSoftValueMapWithCleanup { LLFirSessionCleaner(it.disposable) }
 
     /**
      * Returns the existing session if found, or creates a new session and caches it.
@@ -84,11 +87,7 @@ class LLFirSessionCache(private val project: Project) {
         return didSourceSessionExist || didBinarySessionExist
     }
 
-    private fun removeSessionFrom(module: KtModule, storage: SessionStorage): Boolean {
-        val session = storage.remove(module) ?: return false
-        session.markInvalid()
-        return true
-    }
+    private fun removeSessionFrom(module: KtModule, storage: SessionStorage): Boolean = storage.remove(module) != null
 
     /**
      * Removes all sessions after global invalidation. If [includeLibraryModules] is `false`, sessions of library modules will not be
@@ -121,20 +120,16 @@ class LLFirSessionCache(private val project: Project) {
     }
 
     private fun removeAllSessionsFrom(storage: SessionStorage) {
-        // Because `removeAllSessionsFrom` is executed in a write action, the order of setting `isValid` and clearing `storage` is not
-        // important.
-        storage.values.forEach { it.markInvalid() }
         storage.clear()
     }
 
     private inline fun removeAllMatchingSessionsFrom(storage: SessionStorage, shouldBeRemoved: (KtModule) -> Boolean) {
-        // `ConcurrentSoftValueHashMap` (the implementation used by `storage`) does not back its entry set but rather creates a copy, which
-        // is in violation of the contract of `Map.entrySet`, and thus changes to the entry set are not reflected in `storage`. Because this
-        // function is executed in a write action, we do not need the weak consistency guarantees made by `ConcurrentMap`'s iterator, so a
-        // "collect and remove" approach also works.
+        // The concurrent map implementation used by `storage` does not back its entry set but rather creates a copy, which is in violation
+        // of the contract of `Map.entrySet`, and thus changes to the entry set are not reflected in `storage`. Because this function is
+        // executed in a write action, we do not need the weak consistency guarantees made by `ConcurrentMap`'s iterator, so a "collect and
+        // remove" approach also works.
         val scriptEntries = storage.entries.filter { (module, _) -> shouldBeRemoved(module) }
-        for ((module, session) in scriptEntries) {
-            session.markInvalid()
+        for ((module, _) in scriptEntries) {
             storage.remove(module)
         }
     }
