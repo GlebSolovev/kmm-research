@@ -48,6 +48,8 @@ class KtResolveExtensionForTest(
     override fun getKtFiles(): List<KtResolveExtensionFile> = files
     override fun getContainedPackages(): Set<FqName> = packages
     override fun getShadowedScope(): GlobalSearchScope = shadowedScope
+
+    override fun dispose() {}
 }
 
 class KtResolveExtensionFileForTests(
