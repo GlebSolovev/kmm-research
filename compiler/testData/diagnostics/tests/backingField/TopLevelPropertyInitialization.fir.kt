@@ -4,13 +4,23 @@
 val a: Int
 val b = 1.also { a = 2 }
 <!MUST_BE_INITIALIZED!>val c: Int<!>
-val d by lazy { <!CAPTURED_VAL_INITIALIZATION, VAL_REASSIGNMENT!>c<!> = 2; 1 }
+val d by lazy { <!CAPTURED_VAL_INITIALIZATION!>c<!> = 2; 1 }
+val e: Int
+    get() {
+        <!VAL_REASSIGNMENT!>c<!> = 3
+        return c
+    }
 
 class Class {
     val i: Int
     val j = 1.also { i = 2 }
     <!MUST_BE_INITIALIZED_OR_BE_ABSTRACT!>val k: Int<!>
     val l by lazy { <!CAPTURED_MEMBER_VAL_INITIALIZATION!>k<!> = 2; 1 }
+    val n: Int
+        get() {
+            <!VAL_REASSIGNMENT!>k<!> = 3
+            return k
+        }
 }
 
 fun main() {

@@ -81,22 +81,6 @@ fun PropertyInitializationInfoData.checkPropertyAccesses(
     )
 }
 
-fun PropertyInitializationInfoData.checkPropertyAccess(
-    property: FirPropertySymbol,
-    isForClassInitialization: Boolean,
-    context: CheckerContext,
-    reporter: DiagnosticReporter
-) {
-    // If a property has an initializer (or does not need one), then any reads are OK while any writes are OK
-    // if it's a `var` and bad if it's a `val`. `FirReassignmentAndInvisibleSetterChecker` does this without a CFG.
-    if (!property.requiresInitialization(isForClassInitialization)) return
-
-    checkPropertyAccesses(
-        graph, setOf(property), context, reporter, scope = null,
-        isForClassInitialization, doNotReportUninitializedVariable = false, mutableMapOf()
-    )
-}
-
 @OptIn(SymbolInternals::class)
 private fun PropertyInitializationInfoData.checkPropertyAccesses(
     graph: ControlFlowGraph,

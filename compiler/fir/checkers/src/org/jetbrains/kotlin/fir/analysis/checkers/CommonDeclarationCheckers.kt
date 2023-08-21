@@ -78,7 +78,6 @@ object CommonDeclarationCheckers : DeclarationCheckers() {
             FirPropertyFromParameterChecker,
             FirLocalVariableTypeParametersSyntaxChecker,
             FirDelegateUsesExtensionPropertyTypeParameterChecker,
-            FirTopLevelPropertiesChecker,
             FirLocalExtensionPropertyChecker,
             ContractSyntaxV2PropertyChecker,
             FirVolatileAnnotationChecker,
@@ -142,6 +141,7 @@ object CommonDeclarationCheckers : DeclarationCheckers() {
         get() = setOf(
             FirImportsChecker,
             FirUnresolvedInMiddleOfImportChecker,
+            FirTopLevelPropertiesChecker,
         )
 
     override val controlFlowAnalyserCheckers: Set<FirControlFlowChecker>

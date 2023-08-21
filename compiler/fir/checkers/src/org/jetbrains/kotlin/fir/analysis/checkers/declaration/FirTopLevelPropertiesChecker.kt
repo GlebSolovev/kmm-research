@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.diagnostics.DiagnosticReporter
 import org.jetbrains.kotlin.diagnostics.KtDiagnosticFactory0
 import org.jetbrains.kotlin.diagnostics.reportOn
-import org.jetbrains.kotlin.fir.analysis.cfa.checkPropertyAccess
+import org.jetbrains.kotlin.fir.analysis.cfa.checkPropertyAccesses
 import org.jetbrains.kotlin.fir.analysis.cfa.requiresInitialization
 import org.jetbrains.kotlin.fir.analysis.cfa.util.PropertyInitializationInfo
 import org.jetbrains.kotlin.fir.analysis.cfa.util.PropertyInitializationInfoData
@@ -24,29 +24,27 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.impl.FirDefaultPropertyAccessor
 import org.jetbrains.kotlin.fir.declarations.utils.*
-import org.jetbrains.kotlin.fir.resolve.dfa.cfg.ControlFlowGraph
 import org.jetbrains.kotlin.fir.resolve.dfa.cfg.NormalPath
 import org.jetbrains.kotlin.fir.resolve.dfa.controlFlowGraph
 import org.jetbrains.kotlin.fir.resolve.diagnostics.ConeLocalVariableNoTypeOrInitializer
-import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirPropertySymbol
 import org.jetbrains.kotlin.fir.types.FirErrorTypeRef
 import org.jetbrains.kotlin.lexer.KtTokens
 
 // See old FE's [DeclarationsChecker]
-object FirTopLevelPropertiesChecker : FirPropertyChecker() {
-    override fun check(declaration: FirProperty, context: CheckerContext, reporter: DiagnosticReporter) {
-        // Only report on top level callable declarations
-        val containingFile = context.containingDeclarations.singleOrNull() as? FirFile ?: return
-
-        val symbol = declaration.symbol
-        val info = containingFile.collectionInitializationInfo(symbol, context, reporter)
-        val isDefinitelyAssigned = info?.get(symbol)?.isDefinitelyVisited() == true
-        checkProperty(containingDeclaration = null, declaration, isDefinitelyAssigned, context, reporter, reachable = true)
+object FirTopLevelPropertiesChecker : FirFileChecker() {
+    override fun check(declaration: FirFile, context: CheckerContext, reporter: DiagnosticReporter) {
+        val info = declaration.collectionInitializationInfo(context, reporter)
+        for (innerDeclaration in declaration.declarations) {
+            if (innerDeclaration is FirProperty) {
+                val symbol = innerDeclaration.symbol
+                val isDefinitelyAssigned = info?.get(symbol)?.isDefinitelyVisited() == true
+                checkProperty(containingDeclaration = null, innerDeclaration, isDefinitelyAssigned, context, reporter, reachable = true)
+            }
+        }
     }
 
     private fun FirFile.collectionInitializationInfo(
-        symbol: FirPropertySymbol,
         context: CheckerContext,
         reporter: DiagnosticReporter,
     ): PropertyInitializationInfo? {
@@ -66,7 +64,7 @@ object FirTopLevelPropertiesChecker : FirPropertyChecker() {
 
         // TODO, KT-59803: merge with `FirPropertyInitializationAnalyzer` for fewer passes.
         val data = PropertyInitializationInfoData(propertySymbols, receiver = null, graph)
-        data.checkPropertyAccess(symbol, isForClassInitialization = false, context, reporter)
+        data.checkPropertyAccesses(isForClassInitialization = false, context, reporter)
         return data.getValue(graph.exitNode)[NormalPath]
     }
 }
