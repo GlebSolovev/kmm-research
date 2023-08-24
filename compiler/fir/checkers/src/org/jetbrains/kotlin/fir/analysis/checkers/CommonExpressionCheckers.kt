@@ -77,6 +77,7 @@ object CommonExpressionCheckers : ExpressionCheckers() {
     override val propertyAccessExpressionCheckers: Set<FirPropertyAccessExpressionChecker>
         get() = setOf(
             FirPropertyAccessTypeArgumentsChecker,
+            FirCustomEnumEntriesMigrationAccessChecker,
         )
 
     override val tryExpressionCheckers: Set<FirTryExpressionChecker>
