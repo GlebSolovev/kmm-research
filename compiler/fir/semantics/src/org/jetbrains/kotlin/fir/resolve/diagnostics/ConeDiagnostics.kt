@@ -357,3 +357,9 @@ class ConeAmbiguouslyResolvedAnnotationArgument(
               - compiler arguments stage: $symbolFromAnnotationArgumentsPhase
         """
 }
+
+object ConeEnumEntriesReferenceAmbiguity : ConeDiagnostic {
+    override val reason: String
+        get() = ""
+
+}

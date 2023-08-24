@@ -181,5 +181,6 @@ object CommonExpressionCheckers : ExpressionCheckers() {
     override val callableReferenceAccessCheckers: Set<FirCallableReferenceAccessChecker>
         get() = setOf(
             FirTypeArgumentsOfQualifierOfCallableReferenceChecker,
+            FirCustomEnumEntriesMigrationReferenceChecker,
         )
 }

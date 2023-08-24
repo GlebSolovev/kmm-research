@@ -7,6 +7,7 @@ package org.jetbrains.kotlin.fir.expressions
 
 import org.jetbrains.kotlin.KtSourceElement
 import org.jetbrains.kotlin.fir.FirElement
+import org.jetbrains.kotlin.fir.diagnostics.ConeDiagnostic
 import org.jetbrains.kotlin.fir.references.FirNamedReference
 import org.jetbrains.kotlin.fir.references.FirReference
 import org.jetbrains.kotlin.fir.types.ConeKotlinType
@@ -29,6 +30,7 @@ abstract class FirCallableReferenceAccess : FirQualifiedAccessExpression() {
     abstract override val extensionReceiver: FirExpression
     abstract override val source: KtSourceElement?
     abstract override val calleeReference: FirNamedReference
+    abstract val nonFatalDiagnostics: List<ConeDiagnostic>
     abstract val hasQuestionMarkAtLHS: Boolean
 
     override fun <R, D> accept(visitor: FirVisitor<R, D>, data: D): R = visitor.visitCallableReferenceAccess(this, data)
@@ -57,6 +59,8 @@ abstract class FirCallableReferenceAccess : FirQualifiedAccessExpression() {
     abstract fun replaceCalleeReference(newCalleeReference: FirNamedReference)
 
     abstract override fun replaceCalleeReference(newCalleeReference: FirReference)
+
+    abstract fun replaceNonFatalDiagnostics(newNonFatalDiagnostics: List<ConeDiagnostic>)
 
     abstract fun replaceHasQuestionMarkAtLHS(newHasQuestionMarkAtLHS: Boolean)
 

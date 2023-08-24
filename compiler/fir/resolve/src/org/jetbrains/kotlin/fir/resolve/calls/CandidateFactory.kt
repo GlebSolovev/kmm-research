@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.fir.resolve.calls
 
+import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.fir.*
@@ -18,12 +19,14 @@ import org.jetbrains.kotlin.fir.diagnostics.ConeDiagnostic
 import org.jetbrains.kotlin.fir.expressions.*
 import org.jetbrains.kotlin.fir.resolve.isIntegerLiteralOrOperatorCall
 import org.jetbrains.kotlin.fir.resolve.toFirRegularClass
+import org.jetbrains.kotlin.fir.resolve.toSymbol
 import org.jetbrains.kotlin.fir.scopes.FirScope
 import org.jetbrains.kotlin.fir.scopes.impl.originalForWrappedIntegerOperator
 import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.*
 import org.jetbrains.kotlin.fir.types.classId
 import org.jetbrains.kotlin.fir.types.coneType
+import org.jetbrains.kotlin.fir.types.isSomeFunctionType
 import org.jetbrains.kotlin.fir.types.resolvedType
 import org.jetbrains.kotlin.resolve.calls.components.PostponedArgumentsAnalyzerContext
 import org.jetbrains.kotlin.resolve.calls.inference.model.ConstraintStorage
@@ -97,6 +100,15 @@ class CandidateFactory private constructor(
                     result.addDiagnostic(
                         Unsupported("References to enum entries aren't supported", callSite.calleeReference.source)
                     )
+                }
+                symbol is FirPropertySymbol && symbol.name == StandardNames.ENUM_ENTRIES -> {
+                    val parentClassSymbol = symbol.containingClassLookupTag()?.toSymbol(callInfo.session) as? FirClassSymbol
+                    if (parentClassSymbol?.classKind == ClassKind.ENUM_CLASS) {
+                        val expectedType = callInfo.expectedType
+                        if (expectedType?.isSomeFunctionType(callInfo.session) == false) {
+                            result.addDiagnostic(EnumEntriesReferenceAmbiguity)
+                        }
+                    }
                 }
             }
         } else if (objectsByName && symbol.isRegularClassWithoutCompanion(callInfo.session)) {
