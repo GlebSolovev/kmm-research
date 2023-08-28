@@ -509,6 +509,11 @@ class Fir2IrDeclarationStorage(
         return callablesGenerator.createIrConstructor(constructor, irParent, predefinedOrigin, isLocal)
     }
 
+    @LeakedDeclarationCaches
+    internal fun cacheIrConstructor(constructor: FirConstructor, irConstructor: IrConstructor) {
+        constructorCache[constructor] = irConstructor
+    }
+
     fun getOrCreateIrProperty(
         property: FirProperty,
         irParent: IrDeclarationParent?,
@@ -1068,3 +1073,12 @@ internal fun FirCallableDeclaration.isFakeOverride(fakeOverrideOwnerLookupTag: C
 private object IsStubPropertyForPureFieldKey : FirDeclarationDataKey()
 
 internal var FirProperty.isStubPropertyForPureField: Boolean? by FirDeclarationDataRegistry.data(IsStubPropertyForPureFieldKey)
+
+/**
+ * This annotation indicates that there is a leak in the contract that each declaration should be published only
+ *   after its creation is complete
+ *
+ * See KT-61513
+ */
+@RequiresOptIn
+annotation class LeakedDeclarationCaches
