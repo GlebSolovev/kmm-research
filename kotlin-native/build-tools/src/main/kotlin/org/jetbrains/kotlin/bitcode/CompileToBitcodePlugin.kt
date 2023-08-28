@@ -31,6 +31,7 @@ import org.jetbrains.kotlin.konan.target.TargetDomainObjectContainer
 import org.jetbrains.kotlin.konan.target.TargetWithSanitizer
 import org.jetbrains.kotlin.testing.native.GoogleTestExtension
 import org.jetbrains.kotlin.utils.capitalized
+import org.jetbrains.kotlin.utils.getOrCreate
 import java.time.Duration
 import javax.inject.Inject
 
@@ -51,18 +52,6 @@ private val SanitizerKind?.description
         SanitizerKind.ADDRESS -> " with ASAN"
         SanitizerKind.THREAD -> " with TSAN"
     }
-
-/**
- * Adds new object named [name] and configure it with [action] or return already existing object with this name.
- *
- * Similar to [NamedDomainObjectContainer.maybeCreate] but with [action] argument that will be applied only if
- * an object is being created.
- */
-private fun <T> NamedDomainObjectContainer<T>.getOrCreate(name: String, action: Action<in T>): T = try {
-    this.create(name, action)
-} catch (e: InvalidUserDataException) {
-    this.getByName(name)
-}
 
 private fun Project.compileBitcodeElements(sourceSet: String, action: Action<in Configuration>): Configuration = configurations.getOrCreate("compileBitcode${sourceSet.capitalized}Elements") {
     description = "LLVM bitcode of all defined modules ($sourceSet sources)"

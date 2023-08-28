@@ -19,9 +19,25 @@ import org.jetbrains.kotlin.konan.target.TargetDomainObjectContainer
 import org.jetbrains.kotlin.konan.target.TargetWithSanitizer
 import org.jetbrains.kotlin.konan.util.DependencyProcessor
 import org.jetbrains.kotlin.utils.capitalized
+import org.jetbrains.kotlin.utils.getOrCreate
 import javax.inject.Inject
 
-abstract class NativeDependenciesExtension @Inject constructor(private val project: Project) : TargetDomainObjectContainer<NativeDependenciesExtension.Target>(project) {
+private val String.sanitizedDependencyName
+    get() = split("-").joinToString { it.capitalized }
+
+private fun Project.nativeDependenciesElements(dependency: String) = configurations.getOrCreate("nativeDependencies${dependency.sanitizedDependencyName}Elements") {
+    description = "Native dependencies ($dependency)"
+    isCanBeConsumed = true
+    isCanBeResolved = false
+    attributes {
+        attribute(Usage.USAGE_ATTRIBUTE, project.objects.named(NativeDependenciesUsage.NATIVE_DEPENDENCY))
+    }
+    outgoing {
+        capability(NativeDependenciesBasePlugin.dependencyCapability(project, dependency))
+    }
+}
+
+abstract class NativeDependenciesDownloaderExtension @Inject constructor(private val project: Project) : TargetDomainObjectContainer<NativeDependenciesDownloaderExtension.Target>(project) {
     init {
         this.factory = { target ->
             project.objects.newInstance<Target>(this, target)
@@ -37,30 +53,6 @@ abstract class NativeDependenciesExtension @Inject constructor(private val proje
         }
     }
 
-    val llvmElements: Configuration by project.configurations.creating {
-        description = "Native dependencies (llvm)"
-        isCanBeConsumed = true
-        isCanBeResolved = false
-        attributes {
-            attribute(Usage.USAGE_ATTRIBUTE, project.objects.named(NativeDependenciesUsage.NATIVE_DEPENDENCY))
-        }
-        outgoing {
-            capability(NativeDependenciesConsumerPlugin.llvmCapability(project))
-        }
-    }
-
-    val libffiElements: Configuration by project.configurations.creating {
-        description = "Native dependencies (libffi)"
-        isCanBeConsumed = true
-        isCanBeResolved = false
-        attributes {
-            attribute(Usage.USAGE_ATTRIBUTE, project.objects.named(NativeDependenciesUsage.NATIVE_DEPENDENCY))
-        }
-        outgoing {
-            capability(NativeDependenciesConsumerPlugin.libffiCapability(project))
-        }
-    }
-
     /**
      * Base directory where to download dependencies
      */
@@ -72,7 +64,7 @@ abstract class NativeDependenciesExtension @Inject constructor(private val proje
     abstract val baseUrl: Property<String>
 
     abstract class Target @Inject constructor(
-            private val owner: NativeDependenciesExtension,
+            private val owner: NativeDependenciesDownloaderExtension,
             private val _target: TargetWithSanitizer,
     ) {
         val target by _target::target
@@ -122,28 +114,14 @@ abstract class NativeDependenciesExtension @Inject constructor(private val proje
                     }
                 }
             }
-            loader.llvmHome?.let { llvm ->
-                owner.llvmElements.outgoing {
+            dependencies.forEach { dependency ->
+                project.nativeDependenciesElements(dependency).outgoing {
                     variants {
                         create("$_target") {
                             attributes {
                                 attribute(TargetWithSanitizer.TARGET_ATTRIBUTE, _target)
                             }
-                            artifact(dependencyProcessor.resolve(llvm)) {
-                                builtBy(task)
-                            }
-                        }
-                    }
-                }
-            }
-            loader.libffiDir?.let { libffi ->
-                owner.libffiElements.outgoing {
-                    variants {
-                        create("$_target") {
-                            attributes {
-                                attribute(TargetWithSanitizer.TARGET_ATTRIBUTE, _target)
-                            }
-                            artifact(dependencyProcessor.resolve(libffi)) {
+                            artifact(dependencyProcessor.resolve(dependency)) {
                                 builtBy(task)
                             }
                         }
@@ -154,9 +132,9 @@ abstract class NativeDependenciesExtension @Inject constructor(private val proje
     }
 }
 
-open class NativeDependenciesPlugin : Plugin<Project> {
+open class NativeDependenciesDownloaderPlugin : Plugin<Project> {
     override fun apply(project: Project) {
         project.apply<NativeDependenciesConsumerPlugin>()
-        project.extensions.create<NativeDependenciesExtension>("nativeDependencies", project)
+        project.extensions.create<NativeDependenciesDownloaderExtension>("nativeDependenciesDownloader", project)
     }
 }

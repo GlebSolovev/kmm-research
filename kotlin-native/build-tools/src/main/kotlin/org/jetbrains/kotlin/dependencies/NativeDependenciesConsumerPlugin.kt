@@ -7,26 +7,64 @@ package org.jetbrains.kotlin.dependencies
 
 import org.gradle.api.Plugin
 import org.gradle.api.Project
-import org.jetbrains.kotlin.konan.target.registerTargetWithSanitizerAttribute
+import org.gradle.api.artifacts.Configuration
+import org.gradle.api.attributes.Usage
+import org.gradle.kotlin.dsl.*
+import org.jetbrains.kotlin.konan.target.HostManager
+import org.jetbrains.kotlin.konan.target.PlatformManager
+import java.io.File
+import javax.inject.Inject
 
-/**
- * Plugin for projects that use native dependencies.
- *
- * For defining native dependencies see [NativeDependenciesPlugin]
- *
- * @see NativeDependenciesPlugin
- */
-// TODO: Consider doing NativeDependenciesBasePlugin like standard gradle plugins that also
-//       creates default configurations and lifecycle tasks.
-class NativeDependenciesConsumerPlugin : Plugin<Project> {
-    override fun apply(project: Project) {
-        project.dependencies.attributesSchema {
-            registerTargetWithSanitizerAttribute()
+abstract class NativeDependenciesConsumerExtension @Inject constructor(private val project: Project) {
+    private val platformManager = project.extensions.getByType<PlatformManager>()
+    private val loader = platformManager.loader(HostManager.host)
+
+    private var llvmConfiguration: Configuration? = null
+
+    fun llvm() {
+        if (llvmConfiguration != null)
+            return
+        llvmConfiguration = project.configurations.create("llvmNativeDependency") {
+            isCanBeConsumed = false
+            isCanBeResolved = true
+            attributes {
+                attribute(Usage.USAGE_ATTRIBUTE, project.objects.named(NativeDependenciesUsage.NATIVE_DEPENDENCY))
+            }
+        }
+        val llvmDir = loader.llvmHome ?: error("llvmHome is not defined for ${HostManager.host}")
+        project.dependencies {
+            llvmConfiguration!!(nativeDependency(project(":kotlin-native:dependencies"), llvmDir))
         }
     }
 
-    companion object {
-        internal fun llvmCapability(project: Project) = "${project.group}:${project.name}-llvm:${project.version}"
-        internal fun libffiCapability(project: Project) = "${project.group}:${project.name}-libffi:${project.version}"
+    val llvmDirectory: File
+        get() = llvmConfiguration?.singleFile ?: error("Call llvm() during nativeDependencies configuration")
+
+    private var libffiConfiguration: Configuration? = null
+
+    fun libffi() {
+        if (libffiConfiguration != null)
+            return
+        libffiConfiguration = project.configurations.create("libffiNativeDependency") {
+            isCanBeConsumed = false
+            isCanBeResolved = true
+            attributes {
+                attribute(Usage.USAGE_ATTRIBUTE, project.objects.named(NativeDependenciesUsage.NATIVE_DEPENDENCY))
+            }
+        }
+        val libffiDir = loader.libffiDir ?: error("libffiDir is not defined for ${HostManager.host}")
+        project.dependencies {
+            libffiConfiguration!!(nativeDependency(project(":kotlin-native:dependencies"), libffiDir))
+        }
+    }
+
+    val libffiDirectory: File
+        get() = libffiConfiguration?.singleFile ?: error("Call libffi() during nativeDependencies configuration")
+}
+
+class NativeDependenciesConsumerPlugin : Plugin<Project> {
+    override fun apply(project: Project) {
+        project.apply<NativeDependenciesBasePlugin>()
+        project.extensions.create<NativeDependenciesConsumerExtension>("nativeDependencies", project)
     }
 }

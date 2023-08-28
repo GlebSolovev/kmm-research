@@ -5,10 +5,7 @@
 
 import org.jetbrains.kotlin.cpp.CppConsumerPlugin
 import org.jetbrains.kotlin.cpp.CppUsage
-import org.jetbrains.kotlin.cpp.DependencyHandlerExKt as CppDependencyHandlerExKt
-import org.jetbrains.kotlin.dependencies.NativeDependenciesConsumerPlugin
-import org.jetbrains.kotlin.dependencies.NativeDependenciesUsage
-import org.jetbrains.kotlin.dependencies.DependencyHandlerExKt as DependenciesDependencyHandlerExKt
+import org.jetbrains.kotlin.cpp.DependencyHandlerExKt
 import org.jetbrains.kotlin.tools.NativePluginKt
 
 
@@ -22,7 +19,7 @@ apply plugin: 'kotlin'
 apply plugin: "native-interop-plugin"
 apply plugin: "maven-publish"
 apply plugin: CppConsumerPlugin
-apply plugin: NativeDependenciesConsumerPlugin
+apply plugin: "native-dependencies"
 
 sourceSets {
     compiler {
@@ -66,26 +63,20 @@ configurations {
             attribute(Usage.USAGE_ATTRIBUTE, objects.named(Usage, CppUsage.LLVM_BITCODE))
         }
     }
-    llvmConfiguration {
-        canBeConsumed = false
-        canBeResolved = true
-        attributes {
-            attribute(Usage.USAGE_ATTRIBUTE, objects.named(Usage, NativeDependenciesUsage.NATIVE_DEPENDENCY))
-        }
-    }
 }
 
 dependencies {
-    use(CppDependencyHandlerExKt) {
+    use(DependencyHandlerExKt) {
         commonFilesBitcode module(project(":kotlin-native:common"), "files")
         commonEnvBitcode module(project(":kotlin-native:common"), "env")
     }
-    use(DependenciesDependencyHandlerExKt) {
-        llvmConfiguration llvm(project(":kotlin-native:dependencies"))
-    }
 }
 
-def llvmDir = configurations.llvmConfiguration.getSingleFile()
+nativeDependencies {
+    llvm()
+}
+
+def llvmDir = nativeDependencies.llvmDirectory.canonicalPath
 
 kotlinNativeInterop {
     llvm {

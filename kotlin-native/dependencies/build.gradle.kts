@@ -7,10 +7,10 @@ import java.io.File
 import org.jetbrains.kotlin.dependencies.NativeDependencies
 
 plugins {
-    id("native-dependencies")
+    id("native-dependencies-downloader")
 }
 
-nativeDependencies {
+nativeDependenciesDownloader {
     baseUrl.set("https://cache-redirector.jetbrains.com/download.jetbrains.com/kotlin/native")
     dependenciesDir.set(rootProject.project(":kotlin-native").property("dependenciesDir") as File)
 

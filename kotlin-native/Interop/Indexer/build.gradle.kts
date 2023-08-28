@@ -6,9 +6,6 @@
 import org.jetbrains.kotlin.tools.lib
 import org.jetbrains.kotlin.tools.solib
 import org.jetbrains.kotlin.*
-import org.jetbrains.kotlin.dependencies.NativeDependenciesConsumerPlugin
-import org.jetbrains.kotlin.dependencies.NativeDependenciesUsage
-import org.jetbrains.kotlin.dependencies.llvm
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.jetbrains.kotlin.konan.target.*
 import org.jetbrains.kotlin.konan.target.ClangArgs
@@ -20,27 +17,18 @@ plugins {
     id("kotlin.native.build-tools-conventions")
     id("native-interop-plugin")
     id("native")
+    id("native-dependencies")
 }
 
-apply<NativeDependenciesConsumerPlugin>()
-
-val llvmConfiguration: Configuration by configurations.creating {
-    isCanBeConsumed = false
-    isCanBeResolved = true
-    attributes {
-        attribute(Usage.USAGE_ATTRIBUTE, objects.named(NativeDependenciesUsage.NATIVE_DEPENDENCY))
-    }
-}
-
-dependencies {
-    llvmConfiguration(llvm(project(":kotlin-native:dependencies")))
+nativeDependencies {
+    llvm()
 }
 
 val libclangextProject = project(":kotlin-native:libclangext")
 val libclangextTask = libclangextProject.path + ":build"
 val libclangextDir = libclangextProject.buildDir
 val libclangextIsEnabled = libclangextProject.findProperty("isEnabled")!! as Boolean
-val llvmDir = llvmConfiguration.singleFile.canonicalPath
+val llvmDir = nativeDependencies.llvmDirectory.canonicalPath
 
 
 val libclang =

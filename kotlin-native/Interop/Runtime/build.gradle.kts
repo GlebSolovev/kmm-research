@@ -6,39 +6,22 @@
 import org.jetbrains.kotlin.tools.lib
 import org.jetbrains.kotlin.tools.solib
 import org.jetbrains.kotlin.*
-import org.jetbrains.kotlin.dependencies.NativeDependenciesConsumerPlugin
-import org.jetbrains.kotlin.dependencies.NativeDependenciesUsage
-import org.jetbrains.kotlin.dependencies.libffi
 
 plugins {
     id("org.jetbrains.kotlin.jvm")
     id("native")
+    id("native-dependencies")
 }
 
-apply<NativeDependenciesConsumerPlugin>()
-
-val libffiConfiguration: Configuration by configurations.creating {
-    isCanBeConsumed = false
-    isCanBeResolved = true
-    attributes {
-        attribute(Usage.USAGE_ATTRIBUTE, objects.named(NativeDependenciesUsage.NATIVE_DEPENDENCY))
-    }
+nativeDependencies {
+    libffi()
 }
-
-dependencies {
-    implementation(project(":kotlin-native:utilities:basic-utils"))
-    implementation(project(":kotlin-stdlib"))
-    implementation(commonDependency("org.jetbrains.kotlin:kotlin-reflect")) { isTransitive = false }
-    libffiConfiguration(libffi(project(":kotlin-native:dependencies")))
-}
-
-val hostLibffiDir = libffiConfiguration.singleFile.canonicalPath
 
 native {
     val isWindows = PlatformInfo.isWindows()
     val obj = if (isWindows) "obj" else "o"
     val lib = if (isWindows) "lib" else "a"
-    val cflags = mutableListOf("-I$hostLibffiDir/include",
+    val cflags = mutableListOf("-I${nativeDependencies.libffiDirectory.canonicalPath}/include",
                                *platformManager.hostPlatform.clangForJni.hostCompilerArgsForJni)
     suffixes {
         (".c" to ".$obj") {
@@ -58,12 +41,18 @@ native {
         flags("-shared",
               "-o",ruleOut(), *ruleInAll(),
               "-L${project(":kotlin-native:libclangext").buildDir}",
-              "$hostLibffiDir/lib/libffi.$lib",
+              "${nativeDependencies.libffiDirectory.canonicalPath}/lib/libffi.$lib",
               "-lclangext")
     }
     tasks.named(solib("callbacks")).configure {
         dependsOn(":kotlin-native:libclangext:${lib("clangext")}")
     }
+}
+
+dependencies {
+    implementation(project(":kotlin-native:utilities:basic-utils"))
+    implementation(project(":kotlin-stdlib"))
+    implementation(commonDependency("org.jetbrains.kotlin:kotlin-reflect")) { isTransitive = false }
 }
 
 sourceSets.main.get().java.srcDir("src/jvm/kotlin")

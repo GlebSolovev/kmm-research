@@ -16,38 +16,22 @@
 
 import org.jetbrains.kotlin.tools.lib
 import org.jetbrains.kotlin.*
-import org.jetbrains.kotlin.*
-import org.jetbrains.kotlin.dependencies.NativeDependenciesConsumerPlugin
-import org.jetbrains.kotlin.dependencies.NativeDependenciesUsage
-import org.jetbrains.kotlin.dependencies.llvm
-import org.jetbrains.kotlin.konan.target.ClangArgs
 import org.jetbrains.kotlin.konan.target.HostManager
 
 plugins {
     id("native")
+    id("native-dependencies")
 }
 
-apply<NativeDependenciesConsumerPlugin>()
-
-val llvmConfiguration: Configuration by configurations.creating {
-    isCanBeConsumed = false
-    isCanBeResolved = true
-    attributes {
-        attribute(Usage.USAGE_ATTRIBUTE, objects.named(NativeDependenciesUsage.NATIVE_DEPENDENCY))
-    }
+nativeDependencies {
+    llvm()
 }
-
-dependencies {
-    llvmConfiguration(llvm(project(":kotlin-native:dependencies")))
-}
-
-val llvmDir = llvmConfiguration.singleFile.canonicalPath
 
 native {
     val obj = if (HostManager.hostIsMingw) "obj" else "o"
     val cxxflags = mutableListOf(
         "--std=c++17",
-        "-I${llvmDir}/include",
+        "-I${nativeDependencies.llvmDirectory.canonicalPath}/include",
         "-I${projectDir}/src/main/include"
     )
     suffixes {
