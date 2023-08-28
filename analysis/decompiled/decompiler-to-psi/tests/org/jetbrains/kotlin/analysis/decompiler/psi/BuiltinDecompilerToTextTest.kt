@@ -12,16 +12,20 @@ import org.jetbrains.kotlin.analysis.decompiler.stub.files.AbstractDecompiledCla
 import org.jetbrains.kotlin.idea.KotlinLanguage.INSTANCE
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.test.KotlinTestUtils
+import java.nio.file.Files
 import java.nio.file.Paths
 
 class BuiltinDecompilerToTextTest : AbstractDecompiledClassTest() {
     fun testBuiltinDecompilationToText() {
         val decompiledBuiltInKtFiles = loadBuiltIns()
+        val testDataPath = Paths.get(TEST_DATA_PATH)
         for (file in decompiledBuiltInKtFiles) {
             val resultFileName = file.name + DECOMPILED_TEXT_EXTENSION
-            val expectedFile = Paths.get(TEST_DATA_PATH).resolve(resultFileName)
+            val expectedFile = testDataPath.resolve(resultFileName)
             KotlinTestUtils.assertEqualsToFile(expectedFile, file.text)
         }
+        val expectedBuiltinsCount = Files.list(testDataPath).count().toInt()
+        assertEquals(expectedBuiltinsCount, decompiledBuiltInKtFiles.size)
     }
 
     private fun loadBuiltIns(): Collection<KtFile> {
