@@ -6,6 +6,9 @@
 import org.jetbrains.kotlin.tools.lib
 import org.jetbrains.kotlin.tools.solib
 import org.jetbrains.kotlin.*
+import org.jetbrains.kotlin.dependencies.NativeDependenciesConsumerPlugin
+import org.jetbrains.kotlin.dependencies.NativeDependenciesUsage
+import org.jetbrains.kotlin.dependencies.llvm
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.jetbrains.kotlin.konan.target.*
 import org.jetbrains.kotlin.konan.target.ClangArgs
@@ -19,12 +22,25 @@ plugins {
     id("native")
 }
 
+apply<NativeDependenciesConsumerPlugin>()
+
+val llvmConfiguration: Configuration by configurations.creating {
+    isCanBeConsumed = false
+    isCanBeResolved = true
+    attributes {
+        attribute(Usage.USAGE_ATTRIBUTE, objects.named(NativeDependenciesUsage.NATIVE_DEPENDENCY))
+    }
+}
+
+dependencies {
+    llvmConfiguration(llvm(project(":kotlin-native:dependencies")))
+}
 
 val libclangextProject = project(":kotlin-native:libclangext")
 val libclangextTask = libclangextProject.path + ":build"
 val libclangextDir = libclangextProject.buildDir
 val libclangextIsEnabled = libclangextProject.findProperty("isEnabled")!! as Boolean
-val llvmDir = project.findProperty("llvmDir")
+val llvmDir = llvmConfiguration.singleFile.canonicalPath
 
 
 val libclang =

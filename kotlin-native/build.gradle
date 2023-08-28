@@ -79,10 +79,6 @@ ext {
 }
 
 allprojects {
-    if (path != ":kotlin-native:dependencies") {
-        evaluationDependsOn(":kotlin-native:dependencies")
-    }
-
     repositories {
         mavenCentral()
         maven {

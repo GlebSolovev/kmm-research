@@ -6,18 +6,38 @@
 import org.jetbrains.kotlin.tools.lib
 import org.jetbrains.kotlin.tools.solib
 import org.jetbrains.kotlin.*
+import org.jetbrains.kotlin.dependencies.NativeDependenciesConsumerPlugin
+import org.jetbrains.kotlin.dependencies.NativeDependenciesUsage
+import org.jetbrains.kotlin.dependencies.libffi
 
 plugins {
     id("org.jetbrains.kotlin.jvm")
     id("native")
 }
 
+apply<NativeDependenciesConsumerPlugin>()
+
+val libffiConfiguration: Configuration by configurations.creating {
+    isCanBeConsumed = false
+    isCanBeResolved = true
+    attributes {
+        attribute(Usage.USAGE_ATTRIBUTE, objects.named(NativeDependenciesUsage.NATIVE_DEPENDENCY))
+    }
+}
+
+dependencies {
+    implementation(project(":kotlin-native:utilities:basic-utils"))
+    implementation(project(":kotlin-stdlib"))
+    implementation(commonDependency("org.jetbrains.kotlin:kotlin-reflect")) { isTransitive = false }
+    libffiConfiguration(libffi(project(":kotlin-native:dependencies")))
+}
+
+val hostLibffiDir = libffiConfiguration.singleFile.canonicalPath
+
 native {
     val isWindows = PlatformInfo.isWindows()
     val obj = if (isWindows) "obj" else "o"
     val lib = if (isWindows) "lib" else "a"
-    val host = rootProject.project(":kotlin-native").extra["hostName"]
-    val hostLibffiDir = rootProject.project(":kotlin-native").extra["${host}LibffiDir"]
     val cflags = mutableListOf("-I$hostLibffiDir/include",
                                *platformManager.hostPlatform.clangForJni.hostCompilerArgsForJni)
     suffixes {
@@ -44,12 +64,6 @@ native {
     tasks.named(solib("callbacks")).configure {
         dependsOn(":kotlin-native:libclangext:${lib("clangext")}")
     }
-}
-
-dependencies {
-    implementation(project(":kotlin-native:utilities:basic-utils"))
-    implementation(project(":kotlin-stdlib"))
-    implementation(commonDependency("org.jetbrains.kotlin:kotlin-reflect")) { isTransitive = false }
 }
 
 sourceSets.main.get().java.srcDir("src/jvm/kotlin")

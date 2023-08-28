@@ -16,6 +16,9 @@
 
 import org.jetbrains.kotlin.tools.lib
 import org.jetbrains.kotlin.*
+import org.jetbrains.kotlin.dependencies.NativeDependenciesConsumerPlugin
+import org.jetbrains.kotlin.dependencies.NativeDependenciesUsage
+import org.jetbrains.kotlin.dependencies.llvm
 
 plugins {
     id("kotlin.native.build-tools-conventions")
@@ -24,12 +27,28 @@ plugins {
 val libclangextEnabled = org.jetbrains.kotlin.konan.target.HostManager.hostIsMac
 extra["isEnabled"] = libclangextEnabled
 
+apply<NativeDependenciesConsumerPlugin>()
+
+val llvmConfiguration: Configuration by configurations.creating {
+    isCanBeConsumed = false
+    isCanBeResolved = true
+    attributes {
+        attribute(Usage.USAGE_ATTRIBUTE, objects.named(NativeDependenciesUsage.NATIVE_DEPENDENCY))
+    }
+}
+
+dependencies {
+    llvmConfiguration(llvm(project(":kotlin-native:dependencies")))
+}
+
+val llvmDir = llvmConfiguration.singleFile.canonicalPath
+
 native {
     val isWindows = PlatformInfo.isWindows()
     val obj = if (isWindows) "obj" else "o"
     val cxxflags = mutableListOf("--std=c++17", "-g",
                           "-Isrc/main/include",
-                          "-I${project.findProperty("llvmDir")}/include",
+                          "-I$llvmDir/include",
                           "-DLLVM_DISABLE_ABI_BREAKING_CHECKS_ENFORCING=1")
     if (libclangextEnabled) {
         cxxflags += "-DLIBCLANGEXT_ENABLE=1"

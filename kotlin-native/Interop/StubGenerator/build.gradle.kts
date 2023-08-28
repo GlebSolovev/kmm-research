@@ -1,3 +1,7 @@
+import org.jetbrains.kotlin.dependencies.NativeDependenciesConsumerPlugin
+import org.jetbrains.kotlin.dependencies.NativeDependenciesUsage
+import org.jetbrains.kotlin.dependencies.llvm
+
 /*
  * Copyright 2010-2022 JetBrains s.r.o.
  *
@@ -23,8 +27,18 @@ plugins {
     application
 }
 
+apply<NativeDependenciesConsumerPlugin>()
+
 application {
     mainClass.set("org.jetbrains.kotlin.native.interop.gen.jvm.MainKt")
+}
+
+val llvmConfiguration: Configuration by configurations.creating {
+    isCanBeConsumed = false
+    isCanBeResolved = true
+    attributes {
+        attribute(Usage.USAGE_ATTRIBUTE, objects.named(NativeDependenciesUsage.NATIVE_DEPENDENCY))
+    }
 }
 
 dependencies {
@@ -40,7 +54,11 @@ dependencies {
 
     testImplementation(kotlin("test-junit"))
     testImplementation(project(":kotlin-test:kotlin-test-junit"))
+
+    llvmConfiguration(llvm(project(":kotlin-native:dependencies")))
 }
+
+val llvmDir = llvmConfiguration.singleFile.canonicalPath
 
 tasks {
     withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
@@ -62,7 +80,6 @@ tasks {
         systemProperty("java.library.path", projectsWithNativeLibs.joinToString(File.pathSeparator) {
             File(it.buildDir, "nativelibs").absolutePath
         })
-        val llvmDir = project.findProperty("llvmDir")
         val libclangPath = "$llvmDir/" + if (org.jetbrains.kotlin.konan.target.HostManager.hostIsMingw) {
             "bin/libclang.dll"
         } else {
