@@ -28,6 +28,10 @@ import org.jetbrains.kotlin.gradle.util.testResolveAllConfigurations
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.condition.OS
+import org.junit.jupiter.api.extension.ConditionEvaluationResult
+import org.junit.jupiter.api.extension.ExecutionCondition
+import org.junit.jupiter.api.extension.ExtendWith
+import org.junit.jupiter.api.extension.ExtensionContext
 import java.nio.file.Files
 import java.util.zip.ZipFile
 import java.util.zip.ZipOutputStream
@@ -168,6 +172,36 @@ open class Kapt3IT : Kapt3BaseIT() {
                 |
                 |kotlin {
                 |    jvmToolchain(${jdk.version.majorVersion})
+                |}
+                """.trimMargin()
+            )
+
+            build("assemble") {
+                assertTasksExecuted(":kaptGenerateStubsKotlin", ":kaptKotlin")
+                // Check added because of https://youtrack.jetbrains.com/issue/KT-33056.
+                assertOutputDoesNotContain("javaslang.match.PatternsProcessor")
+            }
+        }
+    }
+
+    // TODO: Remove as JDK 21 is supported on Java Toolchains
+    @DisplayName("Kapt is working with JDK 21")
+    @GradleWithJdkTest
+    @GradleTestVersions(minVersion = TestVersions.Gradle.G_7_3)
+    @EnableOnJdk21
+    fun doTestSimpleWithJdk21(
+        gradleVersion: GradleVersion
+    ) {
+        project(
+            "simple".withPrefix,
+            gradleVersion
+        ) {
+            //language=Groovy
+            buildGradle.appendText(
+                """
+                |
+                |kotlin {
+                |    jvmToolchain(21)
                 |}
                 """.trimMargin()
             )
@@ -1287,3 +1321,17 @@ open class Kapt3IT : Kapt3BaseIT() {
         }
     }
 }
+
+class EnableOnJdk21Condition : ExecutionCondition {
+    override fun evaluateExecutionCondition(context: ExtensionContext?): ConditionEvaluationResult =
+        if (System.getProperty("jdk21Home") == null) {
+            ConditionEvaluationResult.disabled("No JDK 21 Found")
+        } else {
+            ConditionEvaluationResult.enabled("JDK 21 Found")
+        }
+}
+
+@Target(AnnotationTarget.FUNCTION)
+@Retention(AnnotationRetention.RUNTIME)
+@ExtendWith(EnableOnJdk21Condition::class)
+annotation class EnableOnJdk21
