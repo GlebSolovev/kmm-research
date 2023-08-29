@@ -334,7 +334,7 @@ private fun computeFqNameString(declaration: IrDeclarationWithName, result: Stri
         }
         else -> return false
     }
-    if (result.isNotEmpty()) result.append(".")
+    if (result.isNotEmpty()) result.append('.')
     result.append(declaration.name.asString())
     return true
 }
