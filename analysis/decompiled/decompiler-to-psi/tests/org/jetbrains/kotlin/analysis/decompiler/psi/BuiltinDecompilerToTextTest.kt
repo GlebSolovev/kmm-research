@@ -14,6 +14,8 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.test.KotlinTestUtils
 import java.nio.file.Files
 import java.nio.file.Paths
+import kotlin.io.path.name
+import kotlin.streams.toList
 
 class BuiltinDecompilerToTextTest : AbstractDecompiledClassTest() {
     fun testBuiltinDecompilationToText() {
@@ -24,14 +26,17 @@ class BuiltinDecompilerToTextTest : AbstractDecompiledClassTest() {
             val expectedFile = testDataPath.resolve(resultFileName)
             KotlinTestUtils.assertEqualsToFile(expectedFile, file.text)
         }
-        val expectedBuiltinsCount = Files.list(testDataPath).count().toInt()
-        assertEquals(expectedBuiltinsCount, decompiledBuiltInKtFiles.size)
+        val expectedBuiltins = Files.list(testDataPath).toList()
+        assertEquals(
+            expectedBuiltins.map { it.name.removeSuffix(DECOMPILED_TEXT_EXTENSION) }.sorted(),
+            decompiledBuiltInKtFiles.map { it.name }.sorted(),
+        )
     }
 
     private fun loadBuiltIns(): Collection<KtFile> {
         val psiManager = PsiManager.getInstance(project)
         val builtInDecompiler = KotlinBuiltInDecompiler()
-        return BuiltInsVirtualFileProvider.getInstance().getBuiltInVirtualFiles().map { virtualFile ->
+        return BuiltInsVirtualFileProvider.getInstance().getBuiltInVirtualFiles().mapNotNull { virtualFile ->
             createKtFileStub(psiManager, builtInDecompiler, virtualFile)
         }
     }
@@ -40,11 +45,10 @@ class BuiltinDecompilerToTextTest : AbstractDecompiledClassTest() {
         psiManager: PsiManager,
         builtInDecompiler: KotlinBuiltInDecompiler,
         virtualFile: VirtualFile,
-    ): KtFile {
+    ): KtFile? {
         val fileViewProvider = builtInDecompiler.createFileViewProvider(virtualFile, psiManager, physical = true)
         val psiFile = fileViewProvider.getPsi(INSTANCE)
-        return psiFile as? KtFile
-            ?: error("Expected some KtFile for $virtualFile but $psiFile found")
+        return psiFile as KtFile?
     }
 
     override fun setUp() {
