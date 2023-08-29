@@ -194,6 +194,7 @@ class NamedNativeInteropConfig implements Named {
         }
 
         genTask.configure {
+            dependsOn project.extensions.nativeDependencies.llvmDirectory
             dependsOn ":kotlin-native:Interop:Indexer:nativelibs"
             dependsOn ":kotlin-native:Interop:Runtime:nativelibs"
             classpath = project.configurations.interopStubGenerator

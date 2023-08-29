@@ -6,22 +6,35 @@
 import org.jetbrains.kotlin.tools.lib
 import org.jetbrains.kotlin.tools.solib
 import org.jetbrains.kotlin.*
+import org.jetbrains.kotlin.dependencies.NativeDependenciesUsage
+import org.jetbrains.kotlin.dependencies.nativeDependency
+import org.jetbrains.kotlin.konan.target.HostManager
+import org.jetbrains.kotlin.konan.target.PlatformManager
 
 plugins {
     id("org.jetbrains.kotlin.jvm")
     id("native")
-    id("native-dependencies")
+    id("native-dependencies-base")
 }
 
-nativeDependencies {
-    libffi()
+val libffi: Configuration by configurations.creating {
+    description = "Native libffi library"
+    isCanBeConsumed = false
+    isCanBeResolved = true
+    attributes {
+        attribute(Usage.USAGE_ATTRIBUTE, project.objects.named(NativeDependenciesUsage.NATIVE_DEPENDENCY))
+    }
+}
+
+dependencies {
+    libffi(nativeDependency(project(":kotlin-native:dependencies"), platformManager.loader(HostManager.host).libffiDir!!))
 }
 
 native {
     val isWindows = PlatformInfo.isWindows()
     val obj = if (isWindows) "obj" else "o"
     val lib = if (isWindows) "lib" else "a"
-    val cflags = mutableListOf("-I${nativeDependencies.libffiDirectoryPath}/include",
+    val cflags = mutableListOf("-I${libffi.singleFile.canonicalPath}/include",
                                *platformManager.hostPlatform.clangForJni.hostCompilerArgsForJni)
     suffixes {
         (".c" to ".$obj") {
@@ -41,12 +54,12 @@ native {
         flags("-shared",
               "-o",ruleOut(), *ruleInAll(),
               "-L${project(":kotlin-native:libclangext").buildDir}",
-              "${nativeDependencies.libffiDirectoryPath}/lib/libffi.$lib",
+              "${libffi.singleFile.canonicalPath}/lib/libffi.$lib",
               "-lclangext")
     }
     tasks.named(solib("callbacks")).configure {
         dependsOn(":kotlin-native:libclangext:${lib("clangext")}")
-        dependsOn(nativeDependencies.libffiDirectory)
+        dependsOn(libffi)
     }
 }
 

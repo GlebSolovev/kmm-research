@@ -48,30 +48,6 @@ abstract class NativeDependenciesConsumerExtension @Inject constructor(private v
 
     val llvmDirectoryPath: String
         get() = llvmConfiguration?.singleFile?.canonicalPath ?: error("Call llvm() during nativeDependencies configuration")
-
-    private var libffiConfiguration: Configuration? = null
-
-    fun libffi() {
-        if (libffiConfiguration != null)
-            return
-        libffiConfiguration = project.configurations.create("libffiNativeDependency") {
-            isCanBeConsumed = false
-            isCanBeResolved = true
-            attributes {
-                attribute(Usage.USAGE_ATTRIBUTE, project.objects.named(NativeDependenciesUsage.NATIVE_DEPENDENCY))
-            }
-        }
-        val libffiDir = loader.libffiDir ?: error("libffiDir is not defined for ${HostManager.host}")
-        project.dependencies {
-            libffiConfiguration!!(nativeDependency(project(":kotlin-native:dependencies"), libffiDir))
-        }
-    }
-
-    val libffiDirectory: Provider<Directory>
-        get() = libffiConfiguration?.singleDirectory(project.layout) ?: error("Call libffi() during nativeDependencies configuration")
-
-    val libffiDirectoryPath: String
-        get() = libffiConfiguration?.singleFile?.canonicalPath ?: error("Call libffi() during nativeDependencies configuration")
 }
 
 class NativeDependenciesConsumerPlugin : Plugin<Project> {
