@@ -26,7 +26,7 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.test.builders.TestConfigurationBuilder
 import org.jetbrains.kotlin.test.services.TestModuleStructure
 import org.jetbrains.kotlin.test.services.TestServices
-import org.jetbrains.kotlin.test.util.JUnit4Assertions.assertTrue
+import org.jetbrains.kotlin.test.services.assertions
 
 /**
  * A simple test which detects when resolve extension disposal after modification events/session invalidation doesn't work *at all*.
@@ -42,9 +42,15 @@ abstract class AbstractResolveExtensionDisposalAfterModificationEventTest : Abst
         val session = LLFirSessionCache.getInstance(project).getSession(module)
         val resolveExtension = session.llResolveExtensionTool!!.extensions.single() as KtResolveExtensionWithDisposalTracker
 
+        testServices.assertions.assertFalse(resolveExtension.isDisposed) {
+            "The resolve extension should not be disposed before the modification event is published."
+        }
+
         moduleStructure.publishModificationEventByDirective(project, module)
 
-        assertTrue(resolveExtension.isDisposed) { "The resolve extension should be disposed." }
+        testServices.assertions.assertTrue(resolveExtension.isDisposed) {
+            "The resolve extension should be disposed after the modification event has been published."
+        }
     }
 
     override val configurator: AnalysisApiTestConfigurator
