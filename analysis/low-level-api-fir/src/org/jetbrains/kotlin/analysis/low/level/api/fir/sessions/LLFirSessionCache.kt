@@ -5,13 +5,13 @@
 
 package org.jetbrains.kotlin.analysis.low.level.api.fir.sessions
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.low.level.api.fir.LLFirInternals
-import org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.LLFirSession.LLFirSessionCleaner
 import org.jetbrains.kotlin.analysis.low.level.api.fir.util.checkCanceled
 import org.jetbrains.kotlin.analysis.project.structure.*
-import org.jetbrains.kotlin.analysis.utils.collections.createConcurrentSoftValueMapWithCleanup
+import org.jetbrains.kotlin.analysis.utils.caches.CleanableSoftValueCache
 import org.jetbrains.kotlin.fir.FirModuleDataImpl
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.PrivateSessionConstructor
@@ -22,22 +22,21 @@ import org.jetbrains.kotlin.platform.jvm.JvmPlatform
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.platform.konan.NativePlatform
 import org.jetbrains.kotlin.resolve.jvm.platform.JvmPlatformAnalyzerServices
-import java.util.concurrent.ConcurrentMap
 
-private typealias SessionStorage = ConcurrentMap<KtModule, LLFirSession>
+private typealias SessionStorage = CleanableSoftValueCache<KtModule, LLFirSession>
 
 @LLFirInternals
-class LLFirSessionCache(private val project: Project) {
+class LLFirSessionCache(private val project: Project) : Disposable {
     companion object {
         fun getInstance(project: Project): LLFirSessionCache {
             return project.getService(LLFirSessionCache::class.java)
         }
     }
 
-    // Removal from the session storage invokes the `LLFirSessionCleaner`, which marks the session as invalid and disposes any disposables
-    // registered with the `LLFirSession`'s disposable.
-    private val sourceCache: SessionStorage = createConcurrentSoftValueMapWithCleanup { LLFirSessionCleaner(it.disposable) }
-    private val binaryCache: SessionStorage = createConcurrentSoftValueMapWithCleanup { LLFirSessionCleaner(it.disposable) }
+    // Removal from the session storage invokes the `LLFirSession`'s cleaner, which marks the session as invalid and disposes any
+    // disposables registered with the `LLFirSession`'s disposable.
+    private val sourceCache: SessionStorage = CleanableSoftValueCache(LLFirSession::createCleaner)
+    private val binaryCache: SessionStorage = CleanableSoftValueCache(LLFirSession::createCleaner)
 
     /**
      * Returns the existing session if found, or creates a new session and caches it.
@@ -124,14 +123,11 @@ class LLFirSessionCache(private val project: Project) {
     }
 
     private inline fun removeAllMatchingSessionsFrom(storage: SessionStorage, shouldBeRemoved: (KtModule) -> Boolean) {
-        // The concurrent map implementation used by `storage` does not back its entry set but rather creates a copy, which is in violation
-        // of the contract of `Map.entrySet`, and thus changes to the entry set are not reflected in `storage`. Because this function is
-        // executed in a write action, we do not need the weak consistency guarantees made by `ConcurrentMap`'s iterator, so a "collect and
-        // remove" approach also works.
-        val scriptEntries = storage.entries.filter { (module, _) -> shouldBeRemoved(module) }
-        for ((module, _) in scriptEntries) {
-            storage.remove(module)
-        }
+        // Because this function is executed in a write action, we do not need concurrency guarantees to remove all matching sessions, so a
+        // "collect and remove" approach also works.
+        storage.keys
+            .filter(shouldBeRemoved)
+            .forEach(storage::remove)
     }
 
     private fun createSession(module: KtModule): LLFirSession {
@@ -154,6 +150,9 @@ class LLFirSessionCache(private val project: Project) {
             targetPlatform.all { it is NativePlatform } -> LLFirNativeSessionFactory(project)
             else -> LLFirCommonSessionFactory(project)
         }
+    }
+
+    override fun dispose() {
     }
 }
 

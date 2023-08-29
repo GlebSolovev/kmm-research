@@ -10,7 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.ModificationTracker
 import org.jetbrains.kotlin.analysis.project.structure.KtModule
-import org.jetbrains.kotlin.analysis.utils.collections.MapValueCleaner
+import org.jetbrains.kotlin.analysis.utils.caches.SoftValueCleaner
 import org.jetbrains.kotlin.fir.BuiltinTypes
 import org.jetbrains.kotlin.fir.FirElementWithResolveState
 import org.jetbrains.kotlin.fir.FirSession
@@ -56,22 +56,21 @@ abstract class LLFirSession(
         }
     }
 
-    private val disposableLazy: Lazy<Disposable> = lazy(LazyThreadSafetyMode.PUBLICATION) {
+    private val lazyDisposable: Lazy<Disposable> = lazy {
         val disposable = object : Disposable {
             override fun dispose() {
                 // Nothing to do here. The `Disposable` will be a parent for disposables that depend on the session's lifetime.
             }
         }
 
-        // Some modules will have a corresponding IntelliJ `Module`, but it is hard to reach through the `KtModule` API, and it does not
-        // exist for all `KtModule`s. Because sessions are invalidated (and subsequently cleaned up) when a module is removed and disposed,
-        // it's not critical to have the IJ `Module` as a disposable parent.
-        Disposer.register(project, disposable)
+        // `LLFirSessionCache` is used as a disposable parent so that disposal is triggered after the Kotlin plugin is unloaded. We don't
+        // register a module as a disposable parent, because (1) IJ `Module`s may persist beyond the plugin's lifetime, (2) not all
+        // `KtModule`s have a corresponding `Module`, and (3) sessions are invalidated (and subsequently cleaned up) when their module is
+        // removed.
+        Disposer.register(LLFirSessionCache.getInstance(project), disposable)
 
         disposable
     }
-
-    val disposable: Disposable? get() = if (disposableLazy.isInitialized()) disposableLazy.value else null
 
     /**
      * Returns an already registered [Disposable] which is alive until the session is invalidated. It can be used as a parent disposable for
@@ -80,17 +79,28 @@ abstract class LLFirSession(
      *
      * Because not all sessions have disposable components, this disposable is created and registered on-demand with the first call to
      * [requestDisposable]. This avoids polluting [Disposer] with unneeded disposables.
+     *
+     * The disposable must only be requested during session creation, before the session is added to [LLFirSessionCache].
      */
-    fun requestDisposable(): Disposable = disposableLazy.value
+    fun requestDisposable(): Disposable = lazyDisposable.value
 
     /**
-     * [LLFirSessionCleaner] performs cleanup after the session has been invalidated or reclaimed. It must not keep a strong reference to
-     * its associated [LLFirSession], because otherwise the soft reference-based garbage collection of unused sessions will not work.
+     * Creates a [SoftValueCleaner] that performs cleanup after the session has been invalidated or reclaimed. This cleanup will mark the
+     * session as invalid and dispose its disposable (if requested during session creation).
+     */
+    fun createCleaner(): SoftValueCleaner<LLFirSession> {
+        val disposable = if (lazyDisposable.isInitialized()) lazyDisposable.value else null
+        return LLFirSessionCleaner(disposable)
+    }
+
+    /**
+     * [LLFirSessionCleaner] must not keep a strong reference to its associated [LLFirSession], because otherwise the soft reference-based
+     * garbage collection of unused sessions will not work.
      *
      * @param disposable The associated [LLFirSession]'s [disposable]. Keeping a separate reference ensures that the disposable can be
      *  disposed even after the session has been reclaimed by the GC.
      */
-    internal class LLFirSessionCleaner(private val disposable: Disposable?) : MapValueCleaner<LLFirSession> {
+    internal class LLFirSessionCleaner(private val disposable: Disposable?) : SoftValueCleaner<LLFirSession> {
         override fun cleanUp(value: LLFirSession?) {
             value?.isValid = false
             disposable?.let { Disposer.dispose(it) }
