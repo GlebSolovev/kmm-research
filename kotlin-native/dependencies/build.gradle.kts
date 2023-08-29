@@ -34,7 +34,7 @@ dependencies {
  * Download all dependencies.
  */
 val update by tasks.registering {
-    dependsOn(allNativeDependencies))
+    dependsOn(allNativeDependencies)
 }
 
 // TODO: This sort of task probably belongs to :kotlin-native
