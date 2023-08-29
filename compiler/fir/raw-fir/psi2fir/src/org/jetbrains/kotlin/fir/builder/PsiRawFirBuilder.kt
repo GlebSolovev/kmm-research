@@ -2022,7 +2022,7 @@ open class PsiRawFirBuilder(
 
                         if (hasDelegate()) {
                             fun extractDelegateExpression() =
-                                buildOrLazyExpression(this@toFirProperty.toFirSourceElement(KtFakeSourceElementKind.WrappedDelegate)) {
+                                buildOrLazyExpression(this@toFirProperty.delegate?.expression?.toFirSourceElement(KtFakeSourceElementKind.WrappedDelegate)) {
                                     this@toFirProperty.delegate?.expression?.let { expression ->
                                         expression.toFirExpression("Should have delegate")
                                     } ?: buildErrorExpression {
@@ -2032,8 +2032,7 @@ open class PsiRawFirBuilder(
 
                             val delegateBuilder = FirWrappedDelegateExpressionBuilder().apply {
                                 val delegateExpression = extractDelegateExpression()
-                                source =
-                                    this@toFirProperty.delegate?.expression?.toFirSourceElement(KtFakeSourceElementKind.WrappedDelegate)
+                                source = delegateExpression.source?.fakeElement(KtFakeSourceElementKind.WrappedDelegate)
                                 expression = delegateExpression
                             }
 
