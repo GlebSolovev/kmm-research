@@ -25,29 +25,10 @@ import java.io.File
 @UntrackedTask(because = "Output is large and work avoidance is performed in DependencyProcessor anyway")
 abstract class NativeDependencies : DefaultTask() {
     /**
-     * [DependencyProcessor] that will actually perform downloading
+     * [DependencyProcessor] that will perform downloading
      */
     @get:Internal
     abstract val dependencyProcessor: Property<DependencyProcessor>
-
-    /**
-     * List of dependencies that will be downloaded.
-     *
-     * Must be in sync with [dependencyProcessor]
-     */
-    @get:Input
-    abstract val dependencies: ListProperty<String>
-
-    /**
-     * Directories where all downloaded dependencies are stored.
-     */
-    @get:OutputDirectories
-    val dependenciesDirectories: Provider<List<File>>
-        get() = dependencies.map {
-            dependencyProcessor.get().run {
-                it.map(this::resolve)
-            }
-        }
 
     @TaskAction
     fun downloadAndExtract() {

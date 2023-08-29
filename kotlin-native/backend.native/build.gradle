@@ -76,15 +76,13 @@ nativeDependencies {
     llvm()
 }
 
-def llvmDir = nativeDependencies.llvmDirectoryPath
-
 kotlinNativeInterop {
     llvm {
 
         dependsOn ":kotlin-native:llvmDebugInfoC:${NativePluginKt.lib("debugInfo")}"
         dependsOn ":kotlin-native:libllvmext:${NativePluginKt.lib("llvmext")}"
         defFile 'llvm.def'
-        compilerOpts "-I$llvmDir/include", "-I${rootProject.project(':kotlin-native:llvmDebugInfoC').projectDir}/src/main/include", "-I${rootProject.project(':kotlin-native:libllvmext').projectDir}/src/main/include"
+        compilerOpts "-I${nativeDependencies.llvmDirectoryPath}/include", "-I${rootProject.project(':kotlin-native:llvmDebugInfoC').projectDir}/src/main/include", "-I${rootProject.project(':kotlin-native:libllvmext').projectDir}/src/main/include"
         if (isMac()) {
             // $llvmDir/lib contains libc++.1.dylib too, and it seems to be preferred by the linker
             // over the sysroot-provided one.
@@ -96,7 +94,10 @@ kotlinNativeInterop {
             // To enforce linking with proper libc++, pass the default path explicitly:
             linkerOpts "-L${platformManager.hostPlatform.absoluteTargetSysRoot}/usr/lib"
         }
-        linkerOpts "-L$llvmDir/lib", "-L${rootProject.project(':kotlin-native:llvmDebugInfoC').buildDir}", "-L${rootProject.project(':kotlin-native:libllvmext').buildDir}"
+        linkerOpts "-L${nativeDependencies.llvmDirectoryPath}/lib", "-L${rootProject.project(':kotlin-native:llvmDebugInfoC').buildDir}", "-L${rootProject.project(':kotlin-native:libllvmext').buildDir}"
+        genTask.configure {
+            dependsOn(nativeDependencies.llvmDirectory)
+        }
     }
 
     files {

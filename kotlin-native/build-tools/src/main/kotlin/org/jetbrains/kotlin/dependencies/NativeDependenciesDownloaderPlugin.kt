@@ -100,7 +100,6 @@ abstract class NativeDependenciesDownloaderExtension @Inject constructor(private
             description = "Download dependencies for $_target"
             group = "native dependencies"
             dependencyProcessor.set(this@Target.dependencyProcessor)
-            dependencies.set(this@Target.dependencies)
         }
 
         init {
@@ -110,7 +109,13 @@ abstract class NativeDependenciesDownloaderExtension @Inject constructor(private
                         attributes {
                             attribute(TargetWithSanitizer.TARGET_ATTRIBUTE, _target)
                         }
-                        artifact(task)
+                        // Cannot do artifact(task), because it expects single output.
+                        // And cannot do artifacts(task), because it expects an iterable.
+                        dependencies.forEach { dependency ->
+                            artifact(dependencyProcessor.resolve(dependency)) {
+                                builtBy(task)
+                            }
+                        }
                     }
                 }
             }

@@ -25,6 +25,8 @@ import org.gradle.kotlin.dsl.*
 import org.gradle.language.base.plugins.LifecycleBasePlugin
 import org.jetbrains.kotlin.ExecClang
 import org.jetbrains.kotlin.cpp.*
+import org.jetbrains.kotlin.dependencies.NativeDependenciesBasePlugin
+import org.jetbrains.kotlin.dependencies.NativeDependenciesUsage
 import org.jetbrains.kotlin.konan.target.KonanTarget
 import org.jetbrains.kotlin.konan.target.SanitizerKind
 import org.jetbrains.kotlin.konan.target.TargetDomainObjectContainer
@@ -90,6 +92,21 @@ open class CompileToBitcodeExtension @Inject constructor(val project: Project) :
     init {
         this.factory = { target ->
             project.objects.newInstance<Target>(this, target)
+        }
+    }
+
+    /**
+     * Incoming configuration with native dependencies of all modules.
+     */
+    val compileBitcodeNativeDependencies by project.configurations.creating {
+        description = "Native dependencies"
+        isCanBeConsumed = false
+        isCanBeResolved = true
+        attributes {
+            attribute(Usage.USAGE_ATTRIBUTE, project.objects.named(NativeDependenciesUsage.NATIVE_DEPENDENCY))
+        }
+        defaultDependencies {
+            add(project.dependencies.project(":kotlin-native:dependencies"))
         }
     }
 
@@ -197,6 +214,12 @@ open class CompileToBitcodeExtension @Inject constructor(val project: Project) :
         private val compilationDatabase = project.extensions.getByType<CompilationDatabaseExtension>()
         private val execClang = project.extensions.getByType<ExecClang>()
 
+        private val nativeDependenciesForTarget = owner.compileBitcodeNativeDependencies.incoming.artifactView {
+            attributes {
+                attribute(TargetWithSanitizer.TARGET_ATTRIBUTE, _target)
+            }
+        }.files
+
         /**
          * Compiles source files into bitcode files.
          */
@@ -217,8 +240,7 @@ open class CompileToBitcodeExtension @Inject constructor(val project: Project) :
                 this.inputFiles.setIncludes(this@SourceSet.inputFiles.includes)
                 this.inputFiles.setExcludes(this@SourceSet.inputFiles.excludes)
                 this.workingDirectory.set(module.compilerWorkingDirectory)
-                // TODO: Should depend only on the toolchain needed to build for the _target
-                dependsOn(":kotlin-native:dependencies:update")
+                dependsOn(nativeDependenciesForTarget)
                 dependsOn(this@SourceSet.dependencies)
                 onlyIf {
                     this@SourceSet.onlyIf.get().all { it.isSatisfiedBy(this@SourceSet) }
@@ -238,8 +260,7 @@ open class CompileToBitcodeExtension @Inject constructor(val project: Project) :
                     // Compile task depends on the toolchain (including headers) and on the source code (e.g. googletest).
                     // compdb task should also have these dependencies. This way the generated database will point to the
                     // code that actually exists.
-                    // TODO: Should depend only on the toolchain needed to build for the _target
-                    dependsOn(":kotlin-native:dependencies:update")
+                    dependsOn(nativeDependenciesForTarget)
                     dependsOn(this@SourceSet.dependencies)
                 }
             }
@@ -651,6 +672,7 @@ open class CompileToBitcodePlugin : Plugin<Project> {
         project.apply<CppConsumerPlugin>()
         project.apply<CompilationDatabasePlugin>()
         project.apply<GitClangFormatPlugin>()
+        project.apply<NativeDependenciesBasePlugin>()
         project.extensions.create<CompileToBitcodeExtension>("bitcode", project)
     }
 }
