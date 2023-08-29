@@ -148,7 +148,7 @@ fun IrDeclarationWithName.hasEqualFqName(fqName: FqName): Boolean =
 
 fun IrSymbol.hasEqualFqName(fqName: FqName): Boolean {
     return this is IrClassPublicSymbolImpl && with(signature as? IdSignature.CommonSignature ?: return false) {
-        FqName("$packageFqName.$declarationFqName") == fqName
+        "$packageFqName.$declarationFqName" == fqName.asString()
     }
 }
 
