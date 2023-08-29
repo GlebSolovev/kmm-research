@@ -381,7 +381,7 @@ internal class JvmInlineClassLowering(context: JvmBackendContext) : JvmValueClas
         get() {
             if (!isSingleFieldValueClass) return false
             // Before version 1.4, we cannot rely on the Result.equals-impl0 method
-            return !isClassWithFqName(StandardNames.RESULT_FQ_NAME.toUnsafe()) ||
+            return !isClassWithFqName(StandardNames.RESULT_FQ_NAME) ||
                     context.state.languageVersionSettings.apiVersion >= ApiVersion.KOTLIN_1_4
         }
 

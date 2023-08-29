@@ -134,7 +134,7 @@ object InlineClassAbi {
 
 fun IrType.getRequiresMangling(includeInline: Boolean = true, includeMFVC: Boolean = true): Boolean {
     val irClass = erasedUpperBound
-    return !irClass.isClassWithFqName(StandardNames.RESULT_FQ_NAME.toUnsafe()) && when {
+    return !irClass.isClassWithFqName(StandardNames.RESULT_FQ_NAME) && when {
         irClass.isSingleFieldValueClass -> includeInline
         irClass.isMultiFieldValueClass -> includeMFVC
         else -> false
