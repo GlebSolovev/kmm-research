@@ -84,4 +84,7 @@ public abstract class KtResolveExtension : Disposable {
      * (potentially stale) externally generated sources.
      */
     public open fun getShadowedScope(): GlobalSearchScope = GlobalSearchScope.EMPTY_SCOPE
+
+    override fun dispose() {
+    }
 }
