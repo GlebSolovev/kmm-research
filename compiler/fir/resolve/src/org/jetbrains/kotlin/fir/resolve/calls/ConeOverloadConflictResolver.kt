@@ -8,6 +8,9 @@ package org.jetbrains.kotlin.fir.resolve.calls
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.declarations.FirMemberDeclaration
+import org.jetbrains.kotlin.fir.declarations.getSingleExpectForActualOrNull
+import org.jetbrains.kotlin.fir.declarations.utils.isActual
+import org.jetbrains.kotlin.fir.declarations.utils.isExpect
 import org.jetbrains.kotlin.fir.declarations.utils.modality
 import org.jetbrains.kotlin.fir.resolve.BodyResolveComponents
 import org.jetbrains.kotlin.fir.resolve.inference.ConeTypeParameterBasedTypeVariable
@@ -266,7 +269,9 @@ class ConeOverloadConflictResolver(
     ): Candidate? {
         if (candidates.size <= 1) return candidates.singleOrNull()
 
-        val candidateSignatures = candidates.map { candidateCall ->
+        val candidatesWithoutActualizedExpects = filterOutActualizedExpectCandidates(candidates)
+
+        val candidateSignatures = candidatesWithoutActualizedExpects.map { candidateCall ->
             createFlatSignature(candidateCall)
         }
 
@@ -277,6 +282,23 @@ class ConeOverloadConflictResolver(
         }
 
         return bestCandidatesByParameterTypes.exactMaxWith()?.origin
+    }
+
+    private fun filterOutActualizedExpectCandidates(candidates: Set<Candidate>): Set<Candidate> {
+        val expectForActualSymbols = candidates
+            .mapNotNullTo(mutableSetOf()) {
+                val callableSymbol = it.symbol as? FirCallableSymbol<*> ?: return@mapNotNullTo null
+                if (callableSymbol.isActual) callableSymbol.getSingleExpectForActualOrNull() else null
+            }
+
+        return if (expectForActualSymbols.isEmpty()) {
+            candidates // Optimization: in most cases, there are no expectForActualSymbols that's why filtering and allocation are not performed
+        } else {
+            candidates.filterTo(mutableSetOf()) { candidate ->
+                val symbol = candidate.symbol
+                symbol is FirCallableSymbol<*> && (!symbol.isExpect || symbol !in expectForActualSymbols)
+            }
+        }
     }
 
     /**
