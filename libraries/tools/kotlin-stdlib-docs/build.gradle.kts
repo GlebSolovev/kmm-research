@@ -172,7 +172,7 @@ fun createStdLibVersionedDocTask(version: String, isLatest: Boolean) =
                 platform.set(Platform.wasm)
                 noJdkLink.set(true)
 
-                displayName.set("Wasm-Js")
+                displayName.set("Wasm-JS")
                 dependsOn("common")
                 sourceRoots.from("$kotlin_stdlib_dir/native-wasm/src")
                 sourceRoots.from("$kotlin_stdlib_dir/wasm/src")
@@ -187,7 +187,7 @@ fun createStdLibVersionedDocTask(version: String, isLatest: Boolean) =
                 platform.set(Platform.wasm)
                 noJdkLink.set(true)
 
-                displayName.set("Wasm-Wasi")
+                displayName.set("Wasm-WASI")
                 dependsOn("common")
                 sourceRoots.from("$kotlin_stdlib_dir/native-wasm/src")
                 sourceRoots.from("$kotlin_stdlib_dir/wasm/src")
@@ -378,7 +378,7 @@ fun createKotlinTestVersionedDocTask(version: String, isLatest: Boolean) =
                 platform.set(Platform.wasm)
                 noJdkLink.set(true)
 
-                displayName.set("Wasm-Js")
+                displayName.set("Wasm-JS")
                 dependsOn("common")
                 sourceRoots.from("$kotlin_root/libraries/kotlin.test/wasm/src/main")
                 sourceRoots.from("$kotlin_root/libraries/kotlin.test/wasm/js/src/main")
@@ -387,7 +387,7 @@ fun createKotlinTestVersionedDocTask(version: String, isLatest: Boolean) =
                 platform.set(Platform.wasm)
                 noJdkLink.set(true)
 
-                displayName.set("Wasm-Wasi")
+                displayName.set("Wasm-WASI")
                 dependsOn("common")
                 sourceRoots.from("$kotlin_root/libraries/kotlin.test/wasm/src/main")
                 sourceRoots.from("$kotlin_root/libraries/kotlin.test/wasm/wasi/src/main")
