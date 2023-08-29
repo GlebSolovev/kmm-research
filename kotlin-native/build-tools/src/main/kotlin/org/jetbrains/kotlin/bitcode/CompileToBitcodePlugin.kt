@@ -25,8 +25,8 @@ import org.gradle.kotlin.dsl.*
 import org.gradle.language.base.plugins.LifecycleBasePlugin
 import org.jetbrains.kotlin.ExecClang
 import org.jetbrains.kotlin.cpp.*
-import org.jetbrains.kotlin.dependencies.NativeDependenciesBasePlugin
-import org.jetbrains.kotlin.dependencies.NativeDependenciesUsage
+import org.jetbrains.kotlin.dependencies.HostPlatformDependenciesExtension
+import org.jetbrains.kotlin.dependencies.HostPlatformDependenciesPlugin
 import org.jetbrains.kotlin.konan.target.KonanTarget
 import org.jetbrains.kotlin.konan.target.SanitizerKind
 import org.jetbrains.kotlin.konan.target.TargetDomainObjectContainer
@@ -92,21 +92,6 @@ open class CompileToBitcodeExtension @Inject constructor(val project: Project) :
     init {
         this.factory = { target ->
             project.objects.newInstance<Target>(this, target)
-        }
-    }
-
-    /**
-     * Incoming configuration with native dependencies of all modules.
-     */
-    val compileBitcodeNativeDependencies: Configuration by project.configurations.creating {
-        description = "Native dependencies"
-        isCanBeConsumed = false
-        isCanBeResolved = true
-        attributes {
-            attribute(Usage.USAGE_ATTRIBUTE, project.objects.named(NativeDependenciesUsage.NATIVE_DEPENDENCY))
-        }
-        defaultDependencies {
-            add(project.dependencies.project(":kotlin-native:dependencies"))
         }
     }
 
@@ -213,8 +198,9 @@ open class CompileToBitcodeExtension @Inject constructor(val project: Project) :
 
         private val compilationDatabase = project.extensions.getByType<CompilationDatabaseExtension>()
         private val execClang = project.extensions.getByType<ExecClang>()
+        private val hostPlatformDependenciesExtension = project.extensions.getByType<HostPlatformDependenciesExtension>()
 
-        private val nativeDependenciesForTarget = owner.compileBitcodeNativeDependencies.incoming.artifactView {
+        private val nativeDependenciesForTarget = hostPlatformDependenciesExtension.hostPlatformNativeDependencies.incoming.artifactView {
             attributes {
                 attribute(TargetWithSanitizer.TARGET_ATTRIBUTE, _target)
             }
@@ -672,7 +658,7 @@ open class CompileToBitcodePlugin : Plugin<Project> {
         project.apply<CppConsumerPlugin>()
         project.apply<CompilationDatabasePlugin>()
         project.apply<GitClangFormatPlugin>()
-        project.apply<NativeDependenciesBasePlugin>()
+        project.apply<HostPlatformDependenciesPlugin>()
         project.extensions.create<CompileToBitcodeExtension>("bitcode", project)
     }
 }

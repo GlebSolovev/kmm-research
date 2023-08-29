@@ -136,5 +136,9 @@ gradlePlugin {
             id = "native-dependencies"
             implementationClass = "org.jetbrains.kotlin.dependencies.NativeDependenciesConsumerPlugin"
         }
+        create("hostPlatformDependencies") {
+            id = "host-platform-dependencies"
+            implementationClass = "org.jetbrains.kotlin.dependencies.HostPlatformDependenciesPlugin"
+        }
     }
 }
