@@ -3,15 +3,15 @@
 ## Checkers structure
 
 There are four kinds of checkers:
-- [DeclarationChecker](https://github.com/JetBrains/kotlin/blob/master/compiler/fir/checkers/src/org/jetbrains/kotlin/fir/analysis/checkers/declaration/FirDeclarationChecker.kt)
-- [ExpressionChecker](https://github.com/JetBrains/kotlin/blob/master/compiler/fir/checkers/src/org/jetbrains/kotlin/fir/analysis/checkers/expression/FirExpressionChecker.kt)
-- [FirTypeChecker](https://github.com/JetBrains/kotlin/blob/master/compiler/fir/checkers/src/org/jetbrains/kotlin/fir/analysis/checkers/type/FirTypeChecker.kt)
-- [FirControlFlowChecker](https://github.com/JetBrains/kotlin/blob/master/compiler/fir/checkers/src/org/jetbrains/kotlin/fir/analysis/checkers/cfa/FirControlFlowChecker.kt)
+- [DeclarationChecker](./src/org/jetbrains/kotlin/fir/analysis/checkers/declaration/FirDeclarationChecker.kt)
+- [ExpressionChecker](./src/org/jetbrains/kotlin/fir/analysis/checkers/expression/FirExpressionChecker.kt)
+- [FirTypeChecker](./src/org/jetbrains/kotlin/fir/analysis/checkers/type/FirTypeChecker.kt)
+- [FirControlFlowChecker](./src/org/jetbrains/kotlin/fir/analysis/checkers/cfa/FirControlFlowChecker.kt)
 
 The first three kinds are typed and may be restricted to checking only a specific type of declaration/expression/type ref. To simplify working with checkers for different FIR elements, there is a number of typed typealiases:
-- Declarations: [FirDeclarationCheckerAliases.kt](https://github.com/JetBrains/kotlin/blob/master/compiler/fir/checkers/gen/org/jetbrains/kotlin/fir/analysis/checkers/declaration/FirDeclarationCheckerAliases.kt)
-- Expressions: [FirExpressionCheckerAliases.kt](https://github.com/JetBrains/kotlin/blob/master/compiler/fir/checkers/gen/org/jetbrains/kotlin/fir/analysis/checkers/expression/FirExpressionCheckerAliases.kt)
-- Type refs: [FirTypeCheckerAliases.kt](https://github.com/JetBrains/kotlin/blob/master/compiler/fir/checkers/gen/org/jetbrains/kotlin/fir/analysis/checkers/type/FirTypeCheckerAliases.kt)
+- Declarations: [FirDeclarationCheckerAliases.kt](./gen/org/jetbrains/kotlin/fir/analysis/checkers/declaration/FirDeclarationCheckerAliases.kt)
+- Expressions: [FirExpressionCheckerAliases.kt](./gen/org/jetbrains/kotlin/fir/analysis/checkers/expression/FirExpressionCheckerAliases.kt)
+- Type refs: [FirTypeCheckerAliases.kt](./gen/org/jetbrains/kotlin/fir/analysis/checkers/type/FirTypeCheckerAliases.kt)
 
 The last kind of checker, `FirControlFlowChecker`, is for checkers which perform Control Flow Analysis (CFA) and is supposed to work with every declaration that has its own Control Flow Graph (CFG)
 
@@ -34,34 +34,34 @@ Those contracts imply the following:
 
 ## Checkers pipeline
 
-All checkers are collected in special containers, named [DeclarationCheckers](https://github.com/JetBrains/kotlin/blob/master/compiler/fir/checkers/gen/org/jetbrains/kotlin/fir/analysis/checkers/declaration/DeclarationCheckers.kt), [ExpressionCheckers](https://github.com/JetBrains/kotlin/blob/master/compiler/fir/checkers/gen/org/jetbrains/kotlin/fir/analysis/checkers/expression/ExpressionCheckers.kt) and [TypeCheckers](https://github.com/JetBrains/kotlin/blob/master/compiler/fir/checkers/gen/org/jetbrains/kotlin/fir/analysis/checkers/type/TypeCheckers.kt). Those containers have fields with sets of checkers for each possible type of checker of corresponding kind
+All checkers are collected in special containers, named [DeclarationCheckers](./gen/org/jetbrains/kotlin/fir/analysis/checkers/declaration/DeclarationCheckers.kt), [ExpressionCheckers](./gen/org/jetbrains/kotlin/fir/analysis/checkers/expression/ExpressionCheckers.kt) and [TypeCheckers](./gen/org/jetbrains/kotlin/fir/analysis/checkers/type/TypeCheckers.kt). Those containers have fields with sets of checkers for each possible type of checker of corresponding kind
 
 There is a number of different container groups:
 - Common checkers, which always run on any platform
-    - [CommonDeclarationCheckers](https://github.com/JetBrains/kotlin/blob/master/compiler/fir/checkers/src/org/jetbrains/kotlin/fir/analysis/checkers/CommonDeclarationCheckers.kt)
-    - [CommonExpressionCheckers](https://github.com/JetBrains/kotlin/blob/master/compiler/fir/checkers/src/org/jetbrains/kotlin/fir/analysis/checkers/CommonExpressionCheckers.kt)
-    - [CommonTypeCheckers](https://github.com/JetBrains/kotlin/blob/master/compiler/fir/checkers/src/org/jetbrains/kotlin/fir/analysis/checkers/CommonTypeCheckers.kt)
+    - [CommonDeclarationCheckers](./src/org/jetbrains/kotlin/fir/analysis/checkers/CommonDeclarationCheckers.kt)
+    - [CommonExpressionCheckers](./src/org/jetbrains/kotlin/fir/analysis/checkers/CommonExpressionCheckers.kt)
+    - [CommonTypeCheckers](./src/org/jetbrains/kotlin/fir/analysis/checkers/CommonTypeCheckers.kt)
 - Checkers for each specific platform (lay in the corresponding `:compiler:fir:checkers:checkers.platform` modules)
     - JVM:
-        - [JvmDeclarationCheckers](https://github.com/JetBrains/kotlin/blob/master/compiler/fir/checkers/checkers.jvm/src/org/jetbrains/kotlin/fir/analysis/jvm/checkers/JvmDeclarationCheckers.kt)
-        - [JvmExpressionCheckers](https://github.com/JetBrains/kotlin/blob/master/compiler/fir/checkers/checkers.jvm/src/org/jetbrains/kotlin/fir/analysis/jvm/checkers/JvmExpressionCheckers.kt)
-        - [JvmTypeCheckers](https://github.com/JetBrains/kotlin/blob/master/compiler/fir/checkers/checkers.jvm/src/org/jetbrains/kotlin/fir/analysis/jvm/checkers/JvmTypeCheckers.kt)
+        - [JvmDeclarationCheckers](./checkers.jvm/src/org/jetbrains/kotlin/fir/analysis/jvm/checkers/JvmDeclarationCheckers.kt)
+        - [JvmExpressionCheckers](./checkers.jvm/src/org/jetbrains/kotlin/fir/analysis/jvm/checkers/JvmExpressionCheckers.kt)
+        - [JvmTypeCheckers](./checkers.jvm/src/org/jetbrains/kotlin/fir/analysis/jvm/checkers/JvmTypeCheckers.kt)
     - JS:
-        - [JsDeclarationCheckers](https://github.com/JetBrains/kotlin/blob/master/compiler/fir/checkers/checkers.js/src/org/jetbrains/kotlin/fir/analysis/js/checkers/JsDeclarationCheckers.kt)
-        - [JsExpressionCheckers](https://github.com/JetBrains/kotlin/blob/master/compiler/fir/checkers/checkers.js/src/org/jetbrains/kotlin/fir/analysis/js/checkers/JsExpressionCheckers.kt)
+        - [JsDeclarationCheckers](./checkers.js/src/org/jetbrains/kotlin/fir/analysis/js/checkers/JsDeclarationCheckers.kt)
+        - [JsExpressionCheckers](./checkers.js/src/org/jetbrains/kotlin/fir/analysis/js/checkers/JsExpressionCheckers.kt)
     - Native:
-        - [NativeDeclarationCheckers](https://github.com/JetBrains/kotlin/blob/master/compiler/fir/checkers/checkers.native/src/org/jetbrains/kotlin/fir/analysis/native/checkers/NativeDeclarationCheckers.kt)
-        - [NativeExpressionCheckers](https://github.com/JetBrains/kotlin/blob/master/compiler/fir/checkers/checkers.native/src/org/jetbrains/kotlin/fir/analysis/native/checkers/NativeExpressionCheckers.kt)
+        - [NativeDeclarationCheckers](./checkers.native/src/org/jetbrains/kotlin/fir/analysis/native/checkers/NativeDeclarationCheckers.kt)
+        - [NativeExpressionCheckers](./checkers.native/src/org/jetbrains/kotlin/fir/analysis/native/checkers/NativeExpressionCheckers.kt)
 - Extended checkers. Those checkers are disabled by default and can be enabled with the `-Xuse-fir-extended-checkers` compiler flag. This group includes experimental and not very performant checkers, which are not crucial for regular compilation
-    - [ExtendedDeclarationCheckers](https://github.com/JetBrains/kotlin/blob/master/compiler/fir/checkers/src/org/jetbrains/kotlin/fir/analysis/checkers/ExtendedDeclarationCheckers.kt)
-    - [ExtendedExpressionCheckers](https://github.com/JetBrains/kotlin/blob/master/compiler/fir/checkers/src/org/jetbrains/kotlin/fir/analysis/checkers/ExtendedExpressionCheckers.kt)
-    - [ExtendedTypeCheckers](https://github.com/JetBrains/kotlin/blob/master/compiler/fir/checkers/src/org/jetbrains/kotlin/fir/analysis/checkers/ExtendedTypeCheckers.kt)
+    - [ExtendedDeclarationCheckers](./src/org/jetbrains/kotlin/fir/analysis/checkers/ExtendedDeclarationCheckers.kt)
+    - [ExtendedExpressionCheckers](./src/org/jetbrains/kotlin/fir/analysis/checkers/ExtendedExpressionCheckers.kt)
+    - [ExtendedTypeCheckers](./src/org/jetbrains/kotlin/fir/analysis/checkers/ExtendedTypeCheckers.kt)
 
-At the beginning of the compilation, in the initialization phase, all required checker containers are collected inside a session component named [CheckersComponent](https://github.com/JetBrains/kotlin/blob/master/compiler/fir/checkers/src/org/jetbrains/kotlin/fir/analysis/CheckersComponent.kt). When the time of checker phase comes, the compiler [creates](https://github.com/JetBrains/kotlin/blob/master/compiler/fir/entrypoint/src/org/jetbrains/kotlin/fir/pipeline/analyse.kt#L23) an instance of [AbstractDiagnosticCollector](https://github.com/JetBrains/kotlin/blob/master/compiler/fir/checkers/src/org/jetbrains/kotlin/fir/analysis/collectors/AbstractDiagnosticCollector.kt), which is responsible to run all checkers. `DiagnosticCollector` traverses the whole given FIR tree, collects `CheckerContext` during this traversal, and runs all checkers that suite the element type on each element.
+At the beginning of the compilation, in the initialization phase, all required checker containers are collected inside a session component named [CheckersComponent](./src/org/jetbrains/kotlin/fir/analysis/CheckersComponent.kt). When the time of checker phase comes, the compiler [creates](https://github.com/JetBrains/kotlin/blob/master/compiler/fir/entrypoint/src/org/jetbrains/kotlin/fir/pipeline/analyse.kt#L23) an instance of [AbstractDiagnosticCollector](./src/org/jetbrains/kotlin/fir/analysis/collectors/AbstractDiagnosticCollector.kt), which is responsible to run all checkers. `DiagnosticCollector` traverses the whole given FIR tree, collects `CheckerContext` during this traversal, and runs all checkers that suite the element type on each element.
 
 ## Checker Context
 
-[CheckerContext](https://github.com/JetBrains/kotlin/blob/master/compiler/fir/checkers/src/org/jetbrains/kotlin/fir/analysis/checkers/context/CheckerContext.kt) contains all information which can be used by checkers, including
+[CheckerContext](./src/org/jetbrains/kotlin/fir/analysis/checkers/context/CheckerContext.kt) contains all information which can be used by checkers, including
 - `session` and `scopeSession`
 - the list of `containingDeclarations`
 - various information about the body which is analyzed
@@ -72,13 +72,13 @@ At the beginning of the compilation, in the initialization phase, all required c
 
 ## Diagnostic reporting
 
-All diagnostics which can be reported by the compiler are stored within the [FirErrors](https://github.com/JetBrains/kotlin/blob/master/compiler/fir/checkers/gen/org/jetbrains/kotlin/fir/analysis/diagnostics/FirErrors.kt), [FirJvmErrors](https://github.com/JetBrains/kotlin/blob/master/compiler/fir/checkers/checkers.jvm/gen/org/jetbrains/kotlin/fir/analysis/diagnostics/jvm/FirJvmErrors.kt), [FirJsErrors](https://github.com/JetBrains/kotlin/blob/master/compiler/fir/checkers/checkers.js/gen/org/jetbrains/kotlin/fir/analysis/diagnostics/js/FirJsErrors.kt) and [FirNativeErrors](https://github.com/JetBrains/kotlin/blob/master/compiler/fir/checkers/checkers.native/gen/org/jetbrains/kotlin/fir/analysis/diagnostics/native/FirNativeErrors.kt) objects. Those diagnostics are auto-generated based on the diagnostic description in one of a diagnostic list in [checkers-component-generator](https://github.com/JetBrains/kotlin/tree/master/compiler/fir/checkers/checkers-component-generator/src/org/jetbrains/kotlin/fir/checkers/generator/diagnostics).
+All diagnostics which can be reported by the compiler are stored within the [FirErrors](./gen/org/jetbrains/kotlin/fir/analysis/diagnostics/FirErrors.kt), [FirJvmErrors](./checkers.jvm/gen/org/jetbrains/kotlin/fir/analysis/diagnostics/jvm/FirJvmErrors.kt), [FirJsErrors](./checkers.js/gen/org/jetbrains/kotlin/fir/analysis/diagnostics/js/FirJsErrors.kt) and [FirNativeErrors](./checkers.native/gen/org/jetbrains/kotlin/fir/analysis/diagnostics/native/FirNativeErrors.kt) objects. Those diagnostics are auto-generated based on the diagnostic description in one of a diagnostic list in [checkers-component-generator](./checkers-component-generator/src/org/jetbrains/kotlin/fir/checkers/generator/diagnostics).
 
 The generation is needed, because Analysis API (AA), which is used in IDE, generates a separate class for each compiler diagnostic with proper conversions of arguments for parametrized diagnostics. And the goal of the code generator is to automatically generate those classes and conversions. To run the diagnostics generation use the `Generators -> Generate FIR Checker Components and FIR/IDE Diagnostics` run configuration.
 
-Diagnostic messages must be added manually to [FirErrorsDefaultMessages](https://github.com/JetBrains/kotlin/blob/master/compiler/fir/checkers/src/org/jetbrains/kotlin/fir/analysis/diagnostics/FirErrorsDefaultMessages.kt), [FirJvmErrorsDefaultMessages](https://github.com/JetBrains/kotlin/blob/master/compiler/fir/checkers/checkers.jvm/src/org/jetbrains/kotlin/fir/analysis/diagnostics/jvm/FirJvmErrorsDefaultMessages.kt), [FirJsErrorsDefaultMessages](https://github.com/JetBrains/kotlin/blob/master/compiler/fir/checkers/checkers.js/src/org/jetbrains/kotlin/fir/analysis/diagnostics/js/FirJsErrorsDefaultMessages.kt) and [FirNativeErrorsDefaultMessages](https://github.com/JetBrains/kotlin/blob/master/compiler/fir/checkers/checkers.native/src/org/jetbrains/kotlin/fir/analysis/diagnostics/native/FirNativeErrorsDefaultMessages.kt) respectively. Guidelines for diagnostic messages are described in the header of `FirErrorsDefaultMessages`
+Diagnostic messages must be added manually to [FirErrorsDefaultMessages](./src/org/jetbrains/kotlin/fir/analysis/diagnostics/FirErrorsDefaultMessages.kt), [FirJvmErrorsDefaultMessages](./checkers.jvm/src/org/jetbrains/kotlin/fir/analysis/diagnostics/jvm/FirJvmErrorsDefaultMessages.kt), [FirJsErrorsDefaultMessages](./checkers.js/src/org/jetbrains/kotlin/fir/analysis/diagnostics/js/FirJsErrorsDefaultMessages.kt) and [FirNativeErrorsDefaultMessages](./checkers.native/src/org/jetbrains/kotlin/fir/analysis/diagnostics/native/FirNativeErrorsDefaultMessages.kt) respectively. Guidelines for diagnostic messages are described in the header of `FirErrorsDefaultMessages`
 
-To report diagnostics, each checker takes an instance of [DiagnosticReporter](https://github.com/JetBrains/kotlin/blob/master/compiler/frontend.common/src/org/jetbrains/kotlin/diagnostics/DiagnosticReporter.kt) as a parameter. To reduce the boilerplate needed to instantiate a diagnostic from the given factory and ensure it's not missed due to reporting on the null source, a one should use the utilities from [KtDiagnosticReportHelpers](https://github.com/JetBrains/kotlin/blob/master/compiler/frontend.common/src/org/jetbrains/kotlin/diagnostics/KtDiagnosticReportHelpers.kt)
+To report diagnostics, each checker takes an instance of [DiagnosticReporter](../../frontend.common/src/org/jetbrains/kotlin/diagnostics/DiagnosticReporter.kt) as a parameter. To reduce the boilerplate needed to instantiate a diagnostic from the given factory and ensure it's not missed due to reporting on the null source, a one should use the utilities from [KtDiagnosticReportHelpers](../../frontend.common/src/org/jetbrains/kotlin/diagnostics/KtDiagnosticReportHelpers.kt)
 
 ## FIR contracts at checker stage
 
