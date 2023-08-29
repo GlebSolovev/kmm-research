@@ -22,6 +22,7 @@ All checkers are supposed to satisfy the following contracts:
 2. checkers are independent
 3. checkers are as specific as possible
 4. checkers should try to avoid traversing the subtree of the element it checks
+5. checkers should not rely on the syntax
 
 Those contracts imply the following:
 1. Usually a checker is an `object` without any state
@@ -31,6 +32,7 @@ Those contracts imply the following:
 4. If a checker is supposed to check anonymous initializers, it's better to create a `FirAnonymousInitializerChecker` which will be separately run for each `init` block in the class rather than creating a `FirClassChecker` which will manually iterate over each `init` block in this class. There are several reasons for that:
     - the diagnostic suppression mechanism is implemented in the checkers dispatcher, so reporting something on a sub-element may cause false-positive diagnostics, if there was a `@Suppress` annotation between the root element (passed to the checker) and the sub-element. There is a mechanism to fix it, but it's not recommended to use
     - checkers with smaller scope increase IDE performance because they require fewer elements to be resolved in order to check something
+5. FIR compiler is made syntax-agnostic and can work with different parsers and syntax tree (at this moment it already supports PSI and LightTree syntax trees), so checkers should not rely on any syntax implementation details. Instead of that, checkers should use [positioning strategies](../../frontend.common-psi/src/org/jetbrains/kotlin/diagnostics/SourceElementPositioningStrategies.kt) to more precise positioning of diagnostics for specific elements (e.g. it allows to render diagnostic on class name using the source of the whole class). The only exception from this rule are inheritors of [FirSyntaxChecker](./src/org/jetbrains/kotlin/fir/analysis/checkers/syntax/FirSyntaxChecker.kt), which work directly with a syntax tree (and must support several implementations for different ASTs)
 
 ## Checkers pipeline
 
@@ -87,3 +89,20 @@ In CLI mode the compiler runs checkers only after it has analyzed the whole worl
 So, to avoid possible problems with accessing some information from FIR elements which was not yet calculated in the AA mode, there are the following restrictions and recommendations:
 - Access to `FirBasedSymbol<*>.fir` is prohibited. One can not extract any FIR element from the corresponding symbol
 - Instead of that, if some information about the declaration is needed (e.g., the list of supertypes for some class symbol), special accessors from that symbol should be used (they are declared as members of symbols). Those accessors call lazy resolution to the least required phase and after that extract the required information from FIR
+
+## Resolution diagnostics
+
+Meanwhile, all checkers are run after resolution of the code is finished some diagnostics can be actually detected only during resolution, such as
+- inference errors (type mismatch, no information for type parameter)
+- call resolution errors (overload resolution ambiguity)
+- type resolution errors (cycle in supertypes)
+- visibility errors (invisible reference)
+- etc
+
+And at the same time, there is a contract that FIR resolution is side effect free (not very formal but still) and produces only a resolved FIR tree. So diagnostics can not be reported from resolution directly.  
+
+To support such diagnostics, there is a following mechanism:
+- some FIR nodes (mostly with word `Error` in name, like [FirResolvedErrorReference](../tree/gen/org/jetbrains/kotlin/fir/references/FirResolvedErrorReference.kt)) have property which contain `ConeDiagnostic`
+- [ConeDiagnostic](../cones/src/org/jetbrains/kotlin/fir/diagnostics/ConeDiagnostic.kt) is an indicator that something went wrong during resolution
+  - there are a lot of different kinds of `ConeDiagnostic` for any possible problems, see [ConeDiagnostics.kt](../semantics/src/org/jetbrains/kotlin/fir/resolve/diagnostics/ConeDiagnostics.kt)
+- `ConeDiagnostic` is saved in FIR tree, and then the special checker component ([ErrorNodeDiagnosticCollectorComponent](./src/org/jetbrains/kotlin/fir/analysis/collectors/components/ErrorNodeDiagnosticCollectorComponent.kt)) checks all FIR nodes and report proper diagnostic based on found `ConeDiagnostic` 
