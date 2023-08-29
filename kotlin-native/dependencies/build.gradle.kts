@@ -4,7 +4,7 @@
  */
 
 import java.io.File
-import org.jetbrains.kotlin.dependencies.NativeDependencies
+import org.jetbrains.kotlin.dependencies.NativeDependenciesUsage
 
 plugins {
     id("native-dependencies-downloader")
@@ -17,11 +17,24 @@ nativeDependenciesDownloader {
     allTargets {}
 }
 
+val allNativeDependencies: Configuration by configurations.creating {
+    description = "Configuration containing all the native dependencies"
+    isCanBeConsumed = false
+    isCanBeResolved = true
+    attributes {
+        attribute(Usage.USAGE_ATTRIBUTE, objects.named(NativeDependenciesUsage.NATIVE_DEPENDENCY))
+    }
+}
+
+dependencies {
+    allNativeDependencies(project(":kotlin-native:dependencies"))
+}
+
 /**
  * Download all dependencies.
  */
 val update by tasks.registering {
-    dependsOn(tasks.withType<NativeDependencies>())
+    dependsOn(allNativeDependencies))
 }
 
 // TODO: This sort of task probably belongs to :kotlin-native

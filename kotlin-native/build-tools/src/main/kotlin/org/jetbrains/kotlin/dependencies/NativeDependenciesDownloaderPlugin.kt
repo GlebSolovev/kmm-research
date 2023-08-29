@@ -96,7 +96,7 @@ abstract class NativeDependenciesDownloaderExtension @Inject constructor(private
 
         val dependencies by loader::dependencies
 
-        val task = project.tasks.register<NativeDependencies>("nativeDependencies${_target.name.capitalized}") {
+        val task = project.tasks.register<NativeDependenciesDownloader>("nativeDependencies${_target.name.capitalized}") {
             description = "Download dependencies for $_target"
             group = "native dependencies"
             dependencyProcessor.set(this@Target.dependencyProcessor)
