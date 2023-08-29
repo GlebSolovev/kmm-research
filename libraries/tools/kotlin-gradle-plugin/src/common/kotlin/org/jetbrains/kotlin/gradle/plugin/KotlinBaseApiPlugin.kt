@@ -64,6 +64,10 @@ abstract class KotlinBaseApiPlugin : DefaultKotlinBasePlugin(), KotlinJvmFactory
         myProject.objects.newInstance(KaptExtension::class.java)
     }
 
+    @Deprecated(
+        message = "Replaced by registerKotlinJvmCompileTask with module name",
+        replaceWith = ReplaceWith("registerKotlinJvmCompileTask(taskName: String, moduleName: String)")
+    )
     override fun registerKotlinJvmCompileTask(taskName: String): TaskProvider<out KotlinJvmCompile> {
         return taskCreator.registerKotlinJVMTask(
             myProject,
@@ -71,6 +75,20 @@ abstract class KotlinBaseApiPlugin : DefaultKotlinBasePlugin(), KotlinJvmFactory
             createCompilerJvmOptions(),
             KotlinCompileConfig(myProject, kotlinExtension)
         )
+    }
+
+    override fun registerKotlinJvmCompileTask(taskName: String, moduleName: String): TaskProvider<out KotlinJvmCompile> {
+        val compilerOptions = createCompilerJvmOptions()
+        compilerOptions.moduleName.set(moduleName)
+        val registeredKotlinJvmCopileTask = taskCreator.registerKotlinJVMTask(
+            myProject,
+            taskName,
+            compilerOptions,
+            KotlinCompileConfig(myProject, kotlinExtension)
+        )
+        registeredKotlinJvmCopileTask.get().ownModuleName.set(compilerOptions.moduleName)
+        registeredKotlinJvmCopileTask.get().moduleName.set(compilerOptions.moduleName)
+        return registeredKotlinJvmCopileTask
     }
 
     override fun registerKaptGenerateStubsTask(taskName: String): TaskProvider<out KaptGenerateStubs> {
