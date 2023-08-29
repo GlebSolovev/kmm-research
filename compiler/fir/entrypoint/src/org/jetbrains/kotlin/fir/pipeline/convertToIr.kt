@@ -170,8 +170,7 @@ fun FirResult.convertToIrAndActualize(
                 fir2IrConfiguration.languageVersionSettings,
                 commonMemberStorage.symbolTable,
                 irMangler,
-                mapOf(outputs.last().session.moduleData.name.asStringStripSpecialMarkers() to
-                              outputs.last().session.moduleData.friendDependencies.map { it.name.asStringStripSpecialMarkers() }),
+                Fir2IrConverter.friendModulesMap(outputs.last().session),
                 fir2IrConfiguration.useIrFakeOverrideBuilder
             )
         }
