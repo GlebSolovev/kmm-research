@@ -15,9 +15,6 @@ import org.jetbrains.kotlin.fir.lazy.Fir2IrLazyClass
 import org.jetbrains.kotlin.fir.resolve.getSymbolByLookupTag
 import org.jetbrains.kotlin.fir.resolve.providers.firProvider
 import org.jetbrains.kotlin.fir.symbols.ConeClassLikeLookupTag
-import org.jetbrains.kotlin.fir.symbols.Fir2IrClassSymbol
-import org.jetbrains.kotlin.fir.symbols.Fir2IrEnumEntrySymbol
-import org.jetbrains.kotlin.fir.symbols.Fir2IrTypeAliasSymbol
 import org.jetbrains.kotlin.fir.types.toLookupTag
 import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
 import org.jetbrains.kotlin.ir.declarations.*
@@ -106,7 +103,7 @@ class Fir2IrClassifiersGenerator(val components: Fir2IrComponents) : Fir2IrCompo
         return if (signature == null)
             factory(IrClassSymbolImpl())
         else
-            symbolTable.declareClass(signature, { Fir2IrClassSymbol(signature) }, factory)
+            symbolTable.declareClass(signature, { IrClassPublicSymbolImpl(signature) }, factory)
     }
 
     fun createIrClass(
@@ -324,7 +321,7 @@ class Fir2IrClassifiersGenerator(val components: Fir2IrComponents) : Fir2IrCompo
         return if (signature == null)
             factory(IrTypeAliasSymbolImpl())
         else
-            symbolTable.declareTypeAlias(signature, { Fir2IrTypeAliasSymbol(signature) }, factory)
+            symbolTable.declareTypeAlias(signature, { IrTypeAliasPublicSymbolImpl(signature) }, factory)
     }
 
     fun createIrTypeAlias(
@@ -399,7 +396,7 @@ class Fir2IrClassifiersGenerator(val components: Fir2IrComponents) : Fir2IrCompo
         return if (signature == null)
             factory(IrEnumEntrySymbolImpl())
         else
-            symbolTable.declareEnumEntry(signature, { Fir2IrEnumEntrySymbol(signature) }, factory)
+            symbolTable.declareEnumEntry(signature, { IrEnumEntryPublicSymbolImpl(signature) }, factory)
     }
 
     fun createIrEnumEntry(
@@ -473,7 +470,7 @@ class Fir2IrClassifiersGenerator(val components: Fir2IrComponents) : Fir2IrCompo
         val parentClass = parentId?.let { createIrClassSymbolForNotFoundClass(it.toLookupTag()) }
         val irParent = parentClass?.owner ?: declarationStorage.getIrExternalPackageFragment(classId.packageFqName)
 
-        return symbolTable.referenceClass(signature, { Fir2IrClassSymbol(signature) }) {
+        return symbolTable.referenceClass(signature, { IrClassPublicSymbolImpl(signature) }) {
             irFactory.createClass(
                 startOffset = UNDEFINED_OFFSET,
                 endOffset = UNDEFINED_OFFSET,
