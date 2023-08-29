@@ -15,28 +15,22 @@
  */
 
 import org.jetbrains.kotlin.tools.lib
-import org.jetbrains.kotlin.*
 import org.jetbrains.kotlin.konan.target.HostManager
 
 plugins {
     id("native")
-    id("native-dependencies")
-}
-
-nativeDependencies {
-    llvm()
 }
 
 native {
     val obj = if (HostManager.hostIsMingw) "obj" else "o"
     val cxxflags = mutableListOf(
         "--std=c++17",
-        "-I${nativeDependencies.llvmDirectoryPath}/include",
+        "-I$llvmDirectoryPath/include",
         "-I${projectDir}/src/main/include"
     )
     suffixes {
         (".cpp" to ".$obj") {
-            tool(*platformManager.hostPlatform.clangForJni.clangCXX("").toTypedArray())
+            tool(*hostPlatform.clangForJni.clangCXX("").toTypedArray())
             flags(*cxxflags.toTypedArray(), "-c", "-o", ruleOut(), ruleInFirst())
         }
 
@@ -49,10 +43,7 @@ native {
     val objSet = sourceSets["main"]!!.transform(".cpp" to ".$obj")
 
     target(lib("debugInfo"), objSet) {
-        tool(*platformManager.hostPlatform.clangForJni.llvmAr("").toTypedArray())
+        tool(*hostPlatform.clangForJni.llvmAr("").toTypedArray())
         flags("-qcv", ruleOut(), *ruleInAll())
-    }
-    tasks.named(lib("debugInfo")).configure {
-        dependsOn(nativeDependencies.llvmDirectory)
     }
 }

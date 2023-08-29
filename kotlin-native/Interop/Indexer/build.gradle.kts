@@ -96,12 +96,12 @@ native {
     val cxxflags = listOf("-std=c++11", *cflags.toTypedArray())
     suffixes {
         (".c" to ".$obj") {
-            tool(*platformManager.hostPlatform.clangForJni.clangC("").toTypedArray())
+            tool(*hostPlatform.clangForJni.clangC("").toTypedArray())
             flags(*cflags.toTypedArray(),
                   "-c", "-o", ruleOut(), ruleInFirst())
         }
         (".cpp" to ".$obj") {
-            tool(*platformManager.hostPlatform.clangForJni.clangCXX("").toTypedArray())
+            tool(*hostPlatform.clangForJni.clangCXX("").toTypedArray())
             flags(*cxxflags.toTypedArray(), "-c", "-o", ruleOut(), ruleInFirst())
         }
 
@@ -118,7 +118,7 @@ native {
                          sourceSets["main-cpp"]!!.transform(".cpp" to ".$obj"))
 
     target(solib("clangstubs"), *objSet) {
-        tool(*platformManager.hostPlatform.clangForJni.clangCXX("").toTypedArray())
+        tool(*hostPlatform.clangForJni.clangCXX("").toTypedArray())
         flags(
             "-shared",
             "-o", ruleOut(), *ruleInAll(),
@@ -128,7 +128,6 @@ native {
 
 tasks.named(solib("clangstubs")).configure {
     dependsOn(":kotlin-native:libclangext:${lib("clangext")}")
-    dependsOn(nativeDependencies.llvmDirectory)
 }
 
 sourceSets {

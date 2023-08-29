@@ -98,7 +98,7 @@ open class CompileToBitcodeExtension @Inject constructor(val project: Project) :
     /**
      * Incoming configuration with native dependencies of all modules.
      */
-    val compileBitcodeNativeDependencies by project.configurations.creating {
+    val compileBitcodeNativeDependencies: Configuration by project.configurations.creating {
         description = "Native dependencies"
         isCanBeConsumed = false
         isCanBeResolved = true
