@@ -280,6 +280,9 @@ kotlin {
                 if (!kotlinBuildProperties.isInIdeaSync) {
                     srcDir("$rootDir/core/builtins/src/kotlin/internal")
                 }
+                if (kotlinBuildProperties.isInIdeaSync) {
+                    srcDir("$rootDir/core/builtins/src/kotlin/")
+                }
             }
         }
         commonTest {
