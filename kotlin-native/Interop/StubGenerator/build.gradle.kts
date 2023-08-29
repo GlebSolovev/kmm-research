@@ -21,7 +21,7 @@ buildscript {
 plugins {
     kotlin("jvm")
     application
-    id("native-dependencies")
+    id("host-platform-dependencies")
 }
 
 application {
@@ -43,10 +43,6 @@ dependencies {
     testImplementation(project(":kotlin-test:kotlin-test-junit"))
 }
 
-nativeDependencies {
-    llvm()
-}
-
 tasks {
     withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
         kotlinOptions {
@@ -64,11 +60,11 @@ tasks {
                 project(":kotlin-native:Interop:Runtime")
         )
         dependsOn(projectsWithNativeLibs.map { "${it.path}:nativelibs" })
-        dependsOn(nativeDependencies.llvmDirectory)
+        dependsOn(hostPlatformDependencies.hostPlatformLLVMDependency)
         systemProperty("java.library.path", projectsWithNativeLibs.joinToString(File.pathSeparator) {
             File(it.buildDir, "nativelibs").absolutePath
         })
-        val libclangPath = "${nativeDependencies.llvmDirectoryPath}/" + if (org.jetbrains.kotlin.konan.target.HostManager.hostIsMingw) {
+        val libclangPath = "${hostPlatformDependencies.llvmDirectoryPath}/" + if (org.jetbrains.kotlin.konan.target.HostManager.hostIsMingw) {
             "bin/libclang.dll"
         } else {
             "lib/${System.mapLibraryName("clang")}"

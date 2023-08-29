@@ -19,7 +19,6 @@ apply plugin: 'kotlin'
 apply plugin: "native-interop-plugin"
 apply plugin: "maven-publish"
 apply plugin: CppConsumerPlugin
-apply plugin: "native-dependencies"
 
 sourceSets {
     compiler {
@@ -72,17 +71,13 @@ dependencies {
     }
 }
 
-nativeDependencies {
-    llvm()
-}
-
 kotlinNativeInterop {
     llvm {
 
         dependsOn ":kotlin-native:llvmDebugInfoC:${NativePluginKt.lib("debugInfo")}"
         dependsOn ":kotlin-native:libllvmext:${NativePluginKt.lib("llvmext")}"
         defFile 'llvm.def'
-        compilerOpts "-I${nativeDependencies.llvmDirectoryPath}/include", "-I${rootProject.project(':kotlin-native:llvmDebugInfoC').projectDir}/src/main/include", "-I${rootProject.project(':kotlin-native:libllvmext').projectDir}/src/main/include"
+        compilerOpts "-I$llvmDirectoryPath/include", "-I${rootProject.project(':kotlin-native:llvmDebugInfoC').projectDir}/src/main/include", "-I${rootProject.project(':kotlin-native:libllvmext').projectDir}/src/main/include"
         if (isMac()) {
             // $llvmDir/lib contains libc++.1.dylib too, and it seems to be preferred by the linker
             // over the sysroot-provided one.
@@ -92,12 +87,9 @@ kotlinNativeInterop {
             // For some reason, this worked fine before macOS 12.3.
             //
             // To enforce linking with proper libc++, pass the default path explicitly:
-            linkerOpts "-L${platformManager.hostPlatform.absoluteTargetSysRoot}/usr/lib"
+            linkerOpts "-L${hostPlatform.absoluteTargetSysRoot}/usr/lib"
         }
-        linkerOpts "-L${nativeDependencies.llvmDirectoryPath}/lib", "-L${rootProject.project(':kotlin-native:llvmDebugInfoC').buildDir}", "-L${rootProject.project(':kotlin-native:libllvmext').buildDir}"
-        genTask.configure {
-            dependsOn(nativeDependencies.llvmDirectory)
-        }
+        linkerOpts "-L$llvmDirectoryPath/lib", "-L${rootProject.project(':kotlin-native:llvmDebugInfoC').buildDir}", "-L${rootProject.project(':kotlin-native:libllvmext').buildDir}"
     }
 
     files {
