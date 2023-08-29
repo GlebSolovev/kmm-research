@@ -5,16 +5,21 @@
 
 package org.jetbrains.kotlin.dependencies
 
-import org.gradle.api.Buildable
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.attributes.Usage
+import org.gradle.api.file.Directory
+import org.gradle.api.file.ProjectLayout
+import org.gradle.api.provider.Provider
 import org.gradle.kotlin.dsl.*
 import org.jetbrains.kotlin.konan.target.HostManager
 import org.jetbrains.kotlin.konan.target.PlatformManager
-import java.io.File
 import javax.inject.Inject
+
+private fun Configuration.singleDirectory(layout: ProjectLayout): Provider<Directory> {
+    return layout.dir(elements.map { it.single().asFile })
+}
 
 abstract class NativeDependenciesConsumerExtension @Inject constructor(private val project: Project) {
     private val platformManager = project.extensions.getByType<PlatformManager>()
@@ -38,12 +43,11 @@ abstract class NativeDependenciesConsumerExtension @Inject constructor(private v
         }
     }
 
-    val llvmDependency: Buildable
-        get() = llvmConfiguration ?: error("Call llvm() during nativeDependencies configuration")
+    val llvmDirectory: Provider<Directory>
+        get() = llvmConfiguration?.singleDirectory(project.layout) ?: error("Call llvm() during nativeDependencies configuration")
 
-    // TODO: Return provider instead.
-    val llvmDirectory: File
-        get() = llvmConfiguration?.singleFile ?: error("Call llvm() during nativeDependencies configuration")
+    val llvmDirectoryPath: String
+        get() = llvmConfiguration?.singleFile?.canonicalPath ?: error("Call llvm() during nativeDependencies configuration")
 
     private var libffiConfiguration: Configuration? = null
 
@@ -63,9 +67,11 @@ abstract class NativeDependenciesConsumerExtension @Inject constructor(private v
         }
     }
 
-    // TODO: Return provider instead.
-    val libffiDirectory: File
-        get() = libffiConfiguration?.singleFile ?: error("Call libffi() during nativeDependencies configuration")
+    val libffiDirectory: Provider<Directory>
+        get() = libffiConfiguration?.singleDirectory(project.layout) ?: error("Call libffi() during nativeDependencies configuration")
+
+    val libffiDirectoryPath: String
+        get() = libffiConfiguration?.singleFile?.canonicalPath ?: error("Call libffi() during nativeDependencies configuration")
 }
 
 class NativeDependenciesConsumerPlugin : Plugin<Project> {

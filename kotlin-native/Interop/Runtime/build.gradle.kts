@@ -21,7 +21,7 @@ native {
     val isWindows = PlatformInfo.isWindows()
     val obj = if (isWindows) "obj" else "o"
     val lib = if (isWindows) "lib" else "a"
-    val cflags = mutableListOf("-I${nativeDependencies.libffiDirectory.canonicalPath}/include",
+    val cflags = mutableListOf("-I${nativeDependencies.libffiDirectoryPath}/include",
                                *platformManager.hostPlatform.clangForJni.hostCompilerArgsForJni)
     suffixes {
         (".c" to ".$obj") {
@@ -41,11 +41,12 @@ native {
         flags("-shared",
               "-o",ruleOut(), *ruleInAll(),
               "-L${project(":kotlin-native:libclangext").buildDir}",
-              "${nativeDependencies.libffiDirectory.canonicalPath}/lib/libffi.$lib",
+              "${nativeDependencies.libffiDirectoryPath}/lib/libffi.$lib",
               "-lclangext")
     }
     tasks.named(solib("callbacks")).configure {
         dependsOn(":kotlin-native:libclangext:${lib("clangext")}")
+        dependsOn(nativeDependencies.libffiDirectory)
     }
 }
 

@@ -34,7 +34,7 @@ native {
     val obj = if (isWindows) "obj" else "o"
     val cxxflags = mutableListOf("--std=c++17", "-g",
                           "-Isrc/main/include",
-                          "-I${nativeDependencies.llvmDirectory.canonicalPath}/include",
+                          "-I${nativeDependencies.llvmDirectoryPath}/include",
                           "-DLLVM_DISABLE_ABI_BREAKING_CHECKS_ENFORCING=1")
     if (libclangextEnabled) {
         cxxflags += "-DLIBCLANGEXT_ENABLE=1"
@@ -54,5 +54,8 @@ native {
     target(lib("clangext"), objSet) {
         tool(*platformManager.hostPlatform.clangForJni.llvmAr("").toTypedArray())
         flags("-qcv", ruleOut(), *ruleInAll())
+    }
+    tasks.named(lib("clangext")).configure {
+        dependsOn(nativeDependencies.llvmDirectory)
     }
 }

@@ -33,7 +33,7 @@ native {
     val obj = if (HostManager.hostIsMingw) "obj" else "o"
     val cxxflags = mutableListOf(
         "--std=c++17",
-        "-I${nativeDependencies.llvmDirectory.canonicalPath}/include",
+        "-I${nativeDependencies.llvmDirectoryPath}/include",
         "-Isrc/main/include"
     )
     when (org.jetbrains.kotlin.konan.target.HostManager.host.family) {
@@ -66,11 +66,15 @@ native {
         tool(*platformManager.hostPlatform.clangForJni.llvmAr("").toTypedArray())
         flags("-qcv", ruleOut(), *ruleInAll())
     }
+    tasks.named(lib("llvmext")).configure {
+        dependsOn(nativeDependencies.llvmDirectory)
+    }
 }
 
 
 val printLlvmDir by tasks.registering {
+    dependsOn(nativeDependencies.llvmDirectory)
     doLast {
-        println(nativeDependencies.llvmDirectory.canonicalPath)
+        println(nativeDependencies.llvmDirectoryPath)
     }
 }

@@ -31,7 +31,7 @@ native {
     val obj = if (HostManager.hostIsMingw) "obj" else "o"
     val cxxflags = mutableListOf(
         "--std=c++17",
-        "-I${nativeDependencies.llvmDirectory.canonicalPath}/include",
+        "-I${nativeDependencies.llvmDirectoryPath}/include",
         "-I${projectDir}/src/main/include"
     )
     suffixes {
@@ -51,5 +51,8 @@ native {
     target(lib("debugInfo"), objSet) {
         tool(*platformManager.hostPlatform.clangForJni.llvmAr("").toTypedArray())
         flags("-qcv", ruleOut(), *ruleInAll())
+    }
+    tasks.named(lib("debugInfo")).configure {
+        dependsOn(nativeDependencies.llvmDirectory)
     }
 }

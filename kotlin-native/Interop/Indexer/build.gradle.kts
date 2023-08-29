@@ -28,7 +28,6 @@ val libclangextProject = project(":kotlin-native:libclangext")
 val libclangextTask = libclangextProject.path + ":build"
 val libclangextDir = libclangextProject.buildDir
 val libclangextIsEnabled = libclangextProject.findProperty("isEnabled")!! as Boolean
-val llvmDir = nativeDependencies.llvmDirectory.canonicalPath
 
 
 val libclang =
@@ -38,11 +37,11 @@ val libclang =
         "lib/${System.mapLibraryName("clang")}"
     }
 
-val cflags = mutableListOf( "-I$llvmDir/include",
+val cflags = mutableListOf( "-I${nativeDependencies.llvmDirectoryPath}/include",
         "-I${project(":kotlin-native:libclangext").projectDir.absolutePath}/src/main/include",
                             *platformManager.hostPlatform.clangForJni.hostCompilerArgsForJni)
 
-val ldflags = mutableListOf("$llvmDir/$libclang", "-L${libclangextDir.absolutePath}", "-lclangext")
+val ldflags = mutableListOf("${nativeDependencies.llvmDirectoryPath}/$libclang", "-L${libclangextDir.absolutePath}", "-lclangext")
 
 if (libclangextIsEnabled) {
     assert(HostManager.hostIsMac)
@@ -78,7 +77,7 @@ if (libclangextIsEnabled) {
             "clangTooling", "clangFormat", "LLVMTarget", "LLVMMC", "LLVMLinker", "LLVMTransformUtils",
             "LLVMBitWriter", "LLVMBitReader", "LLVMAnalysis", "LLVMProfileData", "LLVMCore",
             "LLVMSupport", "LLVMBinaryFormat", "LLVMDemangle"
-    ).map { "$llvmDir/lib/lib${it}.a" }
+    ).map { "${nativeDependencies.llvmDirectoryPath}/lib/lib${it}.a" }
 
     ldflags.addAll(llvmLibs)
     ldflags.addAll(listOf("-lpthread", "-lz", "-lm", "-lcurses"))
@@ -129,6 +128,7 @@ native {
 
 tasks.named(solib("clangstubs")).configure {
     dependsOn(":kotlin-native:libclangext:${lib("clangext")}")
+    dependsOn(nativeDependencies.llvmDirectory)
 }
 
 sourceSets {
@@ -163,6 +163,7 @@ kotlinNativeInterop {
         compilerOpts(cflags)
         linkerOpts = ldflags
         genTask.dependsOn(libclangextTask)
+        genTask.dependsOn(nativeDependencies.llvmDirectory)
         genTask.inputs.dir(libclangextDir)
     }
 }
@@ -186,11 +187,12 @@ tasks.withType<Test>().configureEach {
             project(":kotlin-native:Interop:Runtime")
     )
     dependsOn(projectsWithNativeLibs.map { "${it.path}:nativelibs" })
+    dependsOn(nativeDependencies.llvmDirectory)
     systemProperty("java.library.path", projectsWithNativeLibs.joinToString(File.pathSeparator) {
         File(it.buildDir, "nativelibs").absolutePath
     })
 
-    systemProperty("kotlin.native.llvm.libclang", "$llvmDir/" + if (HostManager.hostIsMingw) {
+    systemProperty("kotlin.native.llvm.libclang", "${nativeDependencies.llvmDirectoryPath}/" + if (HostManager.hostIsMingw) {
         "bin/libclang.dll"
     } else {
         "lib/${System.mapLibraryName("clang")}"

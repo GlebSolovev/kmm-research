@@ -64,10 +64,11 @@ tasks {
                 project(":kotlin-native:Interop:Runtime")
         )
         dependsOn(projectsWithNativeLibs.map { "${it.path}:nativelibs" })
+        dependsOn(nativeDependencies.llvmDirectory)
         systemProperty("java.library.path", projectsWithNativeLibs.joinToString(File.pathSeparator) {
             File(it.buildDir, "nativelibs").absolutePath
         })
-        val libclangPath = "${nativeDependencies.llvmDirectory.canonicalPath}/" + if (org.jetbrains.kotlin.konan.target.HostManager.hostIsMingw) {
+        val libclangPath = "${nativeDependencies.llvmDirectoryPath}/" + if (org.jetbrains.kotlin.konan.target.HostManager.hostIsMingw) {
             "bin/libclang.dll"
         } else {
             "lib/${System.mapLibraryName("clang")}"

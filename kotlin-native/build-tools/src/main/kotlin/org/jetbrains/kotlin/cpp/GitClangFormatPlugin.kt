@@ -28,7 +28,7 @@ open class GitClangFormatPlugin : Plugin<Project> {
             this.directory.convention(directory)
             interactive.convention(false)
             // Needs LLVM toolchain.
-            dependsOn(nativeDependencies.llvmDependency)
+            dependsOn(nativeDependencies.llvmDirectory)
         }
     }
 

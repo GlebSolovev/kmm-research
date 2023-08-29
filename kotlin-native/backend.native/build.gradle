@@ -76,7 +76,7 @@ nativeDependencies {
     llvm()
 }
 
-def llvmDir = nativeDependencies.llvmDirectory.canonicalPath
+def llvmDir = nativeDependencies.llvmDirectoryPath
 
 kotlinNativeInterop {
     llvm {
