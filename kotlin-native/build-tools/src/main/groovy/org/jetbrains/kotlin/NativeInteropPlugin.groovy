@@ -194,7 +194,6 @@ class NamedNativeInteropConfig implements Named {
         }
 
         genTask.configure {
-            dependsOn ":kotlin-native:dependencies:update"
             dependsOn ":kotlin-native:Interop:Indexer:nativelibs"
             dependsOn ":kotlin-native:Interop:Runtime:nativelibs"
             classpath = project.configurations.interopStubGenerator
@@ -293,6 +292,10 @@ class NativeInteropPlugin implements Plugin<Project> {
 
     @Override
     void apply(Project prj) {
+        prj.plugins.apply("native-dependencies")
+        // This plugin directly interacts with clang paths. Add explicit dependency.
+        prj.extensions.nativeDependencies.llvm()
+
         prj.extensions.add("kotlinNativeInterop", new NativeInteropExtension(prj))
 
         prj.configurations {

@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.dependencies
 
+import org.gradle.api.Buildable
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
@@ -37,6 +38,10 @@ abstract class NativeDependenciesConsumerExtension @Inject constructor(private v
         }
     }
 
+    val llvmDependency: Buildable
+        get() = llvmConfiguration ?: error("Call llvm() during nativeDependencies configuration")
+
+    // TODO: Return provider instead.
     val llvmDirectory: File
         get() = llvmConfiguration?.singleFile ?: error("Call llvm() during nativeDependencies configuration")
 
@@ -58,6 +63,7 @@ abstract class NativeDependenciesConsumerExtension @Inject constructor(private v
         }
     }
 
+    // TODO: Return provider instead.
     val libffiDirectory: File
         get() = libffiConfiguration?.singleFile ?: error("Call libffi() during nativeDependencies configuration")
 }

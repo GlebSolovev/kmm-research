@@ -84,6 +84,7 @@ class ToolPatternImpl(val extension: NativeToolsExtension, val output:String, va
         task.input = input.map {
             extension.project.file(it)
         }
+        // TODO: Be more precise. It probably requires only llvm + host toolchain.
         task.dependsOn(":kotlin-native:dependencies:update")
         if (configureDepencies)
             task.input.forEach { task.dependsOn(it.name) }

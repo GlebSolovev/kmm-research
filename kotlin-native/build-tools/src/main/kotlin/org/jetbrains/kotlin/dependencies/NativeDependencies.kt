@@ -13,6 +13,7 @@ import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.OutputDirectories
 import org.gradle.api.tasks.TaskAction
+import org.gradle.api.tasks.UntrackedTask
 import org.jetbrains.kotlin.konan.util.DependencyProcessor
 import java.io.File
 
@@ -21,7 +22,7 @@ import java.io.File
  *
  * Serves as a Gradle task wrapper around [DependencyProcessor].
  */
-// Not cacheable: dependencies are large, no need to keep them in the cache.
+@UntrackedTask(because = "Output is large and work avoidance is performed in DependencyProcessor anyway")
 abstract class NativeDependencies : DefaultTask() {
     /**
      * [DependencyProcessor] that will actually perform downloading
