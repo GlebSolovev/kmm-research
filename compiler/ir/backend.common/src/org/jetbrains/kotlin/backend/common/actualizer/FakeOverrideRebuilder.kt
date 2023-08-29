@@ -26,6 +26,7 @@ import org.jetbrains.kotlin.ir.util.*
 import org.jetbrains.kotlin.ir.visitors.IrElementVisitorVoid
 import org.jetbrains.kotlin.ir.visitors.acceptChildrenVoid
 import org.jetbrains.kotlin.ir.visitors.acceptVoid
+import org.jetbrains.kotlin.ir.visitors.transformChildrenVoid
 
 
 /**
@@ -198,7 +199,7 @@ private class RemoveFakeOverridesVisitor(
                 false
             }
         }
-        super.visitClass(declaration)
+        declaration.acceptChildrenVoid(this)
     }
 }
 
@@ -215,36 +216,36 @@ private class RemapFakeOverridesVisitor(val fakeOverridesMap: Map<IrSymbol, IrSy
         declaration.overriddenSymbols = declaration.overriddenSymbols.map {
             (fakeOverridesMap[it] as? IrSimpleFunctionSymbol) ?: it
         }
-        super.visitSimpleFunction(declaration)
+        declaration.acceptChildrenVoid(this)
     }
 
     override fun visitProperty(declaration: IrProperty) {
         declaration.overriddenSymbols = declaration.overriddenSymbols.map {
             (fakeOverridesMap[it] as? IrPropertySymbol) ?: it
         }
-        super.visitProperty(declaration)
+        declaration.acceptChildrenVoid(this)
     }
 
     override fun visitCall(expression: IrCall) {
         expression.symbol = (fakeOverridesMap[expression.symbol] as? IrSimpleFunctionSymbol) ?: expression.symbol
-        super.visitCall(expression)
+        expression.acceptChildrenVoid(this)
     }
 
     override fun visitFunctionReference(expression: IrFunctionReference) {
         expression.symbol = (fakeOverridesMap[expression.symbol] as? IrSimpleFunctionSymbol) ?: expression.symbol
-        super.visitFunctionReference(expression)
+        expression.acceptChildrenVoid(this)
     }
 
     override fun visitPropertyReference(expression: IrPropertyReference) {
         expression.symbol = (fakeOverridesMap[expression.symbol] as? IrPropertySymbol) ?: expression.symbol
         expression.getter = (expression.getter?.let { fakeOverridesMap[it] } as? IrSimpleFunctionSymbol) ?: expression.getter
         expression.setter = (expression.setter?.let { fakeOverridesMap[it] } as? IrSimpleFunctionSymbol) ?: expression.setter
-        super.visitPropertyReference(expression)
+        expression.acceptChildrenVoid(this)
     }
 
     override fun visitLocalDelegatedPropertyReference(expression: IrLocalDelegatedPropertyReference) {
         expression.getter = (fakeOverridesMap[expression.getter] as? IrSimpleFunctionSymbol) ?: expression.getter
         expression.setter = (expression.setter?.let { fakeOverridesMap[it] } as? IrSimpleFunctionSymbol) ?: expression.setter
-        super.visitLocalDelegatedPropertyReference(expression)
+        expression.acceptChildrenVoid(this)
     }
 }
