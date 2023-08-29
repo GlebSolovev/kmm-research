@@ -27,6 +27,7 @@ import org.jetbrains.kotlin.ir.visitors.IrElementVisitorVoid
 import org.jetbrains.kotlin.ir.visitors.acceptChildrenVoid
 import org.jetbrains.kotlin.ir.visitors.acceptVoid
 import org.jetbrains.kotlin.ir.visitors.transformChildrenVoid
+import org.jetbrains.kotlin.utils.addToStdlib.shouldNotBeCalled
 
 
 /**
@@ -168,11 +169,7 @@ private class RemoveFakeOverridesVisitor(
 
     @OptIn(DelicateSymbolTableApi::class)
     override fun visitClass(declaration: IrClass) {
-        val curList by lazy {
-            mutableListOf<IrSymbol>().also {
-                removedOverrides[declaration.symbol] = it
-            }
-        }
+        val curList = mutableListOf<IrSymbol>()
         declaration.declarations.removeIf {
             if (it is IrOverridableDeclaration<*> && it.isFakeOverride) {
                 when (it) {
@@ -192,12 +189,15 @@ private class RemoveFakeOverridesVisitor(
                         curList.add(it.symbol)
                         symbolTable.removeSimpleFunction(it.symbol)
                     }
-                    else -> TODO()
+                    else -> shouldNotBeCalled("Only simple functions and properties can be overridden")
                 }
                 true
             } else {
                 false
             }
+        }
+        if (curList.isNotEmpty()) {
+            removedOverrides[declaration.symbol] = curList
         }
         declaration.acceptChildrenVoid(this)
     }
