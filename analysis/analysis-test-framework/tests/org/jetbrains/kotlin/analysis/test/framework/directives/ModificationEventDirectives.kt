@@ -15,9 +15,17 @@ import org.jetbrains.kotlin.test.services.TestModuleStructure
 import org.jetbrains.kotlin.test.testFramework.runWriteAction
 
 object ModificationEventDirectives : SimpleDirectivesContainer() {
-    val MODIFICATION_EVENT by stringDirective(
+    val MODIFICATION_EVENT by enumDirective<ModificationEventKind>(
         description = "The modification event to be raised by the test.",
     )
+}
+
+enum class ModificationEventKind {
+    MODULE_STATE_MODIFICATION,
+    MODULE_OUT_OF_BLOCK_MODIFICATION,
+    GLOBAL_MODULE_STATE_MODIFICATION,
+    GLOBAL_SOURCE_MODULE_STATE_MODIFICATION,
+    GLOBAL_SOURCE_OUT_OF_BLOCK_MODIFICATION,
 }
 
 /**
@@ -36,10 +44,10 @@ fun TestModuleStructure.publishModificationEventByDirective(project: Project, mo
     publishModificationEventByKind(modificationEventKind, project, module)
 }
 
-private fun publishModificationEventByKind(modificationEventKind: String, project: Project, module: KtModule?) {
+private fun publishModificationEventByKind(modificationEventKind: ModificationEventKind, project: Project, module: KtModule?) {
     runWriteAction {
         when (modificationEventKind) {
-            "MODULE_STATE_MODIFICATION" -> {
+            ModificationEventKind.MODULE_STATE_MODIFICATION -> {
                 project.analysisMessageBus
                     .syncPublisher(KotlinTopics.MODULE_STATE_MODIFICATION)
                     .onModification(
@@ -48,25 +56,23 @@ private fun publishModificationEventByKind(modificationEventKind: String, projec
                     )
             }
 
-            "MODULE_OUT_OF_BLOCK_MODIFICATION" -> {
+            ModificationEventKind.MODULE_OUT_OF_BLOCK_MODIFICATION -> {
                 project.analysisMessageBus
                     .syncPublisher(KotlinTopics.MODULE_OUT_OF_BLOCK_MODIFICATION)
                     .onModification(module ?: errorModuleRequired())
             }
 
-            "GLOBAL_MODULE_STATE_MODIFICATION" -> {
+            ModificationEventKind.GLOBAL_MODULE_STATE_MODIFICATION -> {
                 project.analysisMessageBus.syncPublisher(KotlinTopics.GLOBAL_MODULE_STATE_MODIFICATION).onModification()
             }
 
-            "GLOBAL_SOURCE_MODULE_STATE_MODIFICATION" -> {
+            ModificationEventKind.GLOBAL_SOURCE_MODULE_STATE_MODIFICATION -> {
                 project.analysisMessageBus.syncPublisher(KotlinTopics.GLOBAL_SOURCE_MODULE_STATE_MODIFICATION).onModification()
             }
 
-            "GLOBAL_SOURCE_OUT_OF_BLOCK_MODIFICATION" -> {
+            ModificationEventKind.GLOBAL_SOURCE_OUT_OF_BLOCK_MODIFICATION -> {
                 project.analysisMessageBus.syncPublisher(KotlinTopics.GLOBAL_SOURCE_OUT_OF_BLOCK_MODIFICATION).onModification()
             }
-
-            else -> error("Unknown `MODIFICATION_EVENT` kind: $modificationEventKind")
         }
     }
 }
