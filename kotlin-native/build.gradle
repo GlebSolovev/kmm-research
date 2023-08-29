@@ -495,7 +495,12 @@ tasks.register("bundle") {
     dependsOn 'bundleRegular', 'bundlePrebuilt'
 }
 
+def sbomBundleRegular = SbomKt.configureSbom(project,
+        "Kotlin-native-${HostManager.platformName()}",
+        "Kotlin/Native bundle", [].toSet(), null)
+
 tasks.register("bundleRegular", (isWindows()) ? Zip : Tar) {
+    dependsOn(sbomBundleRegular)
     def simpleOsName = HostManager.platformName()
     archiveBaseName.set("kotlin-native-$simpleOsName")
     archiveVersion.set(kotlinVersion)
@@ -511,7 +516,12 @@ tasks.register("bundleRegular", (isWindows()) ? Zip : Tar) {
     }
 }
 
+def sbomBundlePrebuilt = SbomKt.configureSbom(project,
+        "Kotlin-native-prebuilt-${HostManager.platformName()}",
+        "Kotlin/Native bundle (prebuilt platform libs)", [].toSet(), null)
+
 tasks.register("bundlePrebuilt", (isWindows()) ? Zip : Tar) {
+    dependsOn(sbomBundlePrebuilt)
     dependsOn("crossDistPlatformLibs")
     def simpleOsName = HostManager.platformName()
     archiveBaseName.set("kotlin-native-prebuilt-$simpleOsName")
@@ -735,7 +745,7 @@ tasks.named("clean", Delete) {
 publishing {
     publications {
         def publishBundlesFromLocation = UtilsKt.getNativeBundlesLocation(project) != project.projectDir
-        register("Bundle", MavenPublication) { mvn ->
+        def bundlePublication = register("Bundle", MavenPublication) { mvn ->
             mvn.groupId = project.group.toString()
             mvn.artifactId = project.name
             mvn.version = kotlinVersion
@@ -748,6 +758,10 @@ publishing {
                     mvn.artifact(file) {
                         classifier = platformName(target)
                         extension = (target.family == Family.MINGW) ? 'zip' : 'tar.gz'
+                    }
+                    mvn.artifact("${UtilsKt.getNativeBundlesLocation(project)}/Kotlin-native-${platformName(target)}.spdx.json") {
+                        classifier = platformName(target)
+                        extension = "spdx.json"
                     }
                 }
             } else {
@@ -777,6 +791,10 @@ publishing {
                     mvn.artifact(file) {
                         classifier = platformName(target)
                         extension = (target.family == Family.MINGW) ? 'zip' : 'tar.gz'
+                    }
+                    mvn.artifact("${UtilsKt.getNativeBundlesLocation(project)}/Kotlin-native-prebuilt-${platformName(target)}.spdx.json") {
+                        classifier = platformName(target)
+                        extension = "spdx.json"
                     }
                 }
             } else {
