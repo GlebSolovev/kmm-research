@@ -385,6 +385,10 @@ fun LLVMTypeRef.isFloatingPoint(): Boolean = when (llvm.LLVMGetTypeKind(this)) {
     else -> false
 }
 
+fun LLVMTypeRef.isInteger(): Boolean = llvm.LLVMGetTypeKind(this) == LLVMTypeKind.LLVMIntegerTypeKind
+
+fun LLVMTypeRef.isPointer(): Boolean = llvm.LLVMGetTypeKind(this) == LLVMTypeKind.LLVMPointerTypeKind
+
 fun LLVMTypeRef.isVectorElementType(): Boolean = when (llvm.LLVMGetTypeKind(this)) {
     LLVMTypeKind.LLVMIntegerTypeKind,
     LLVMTypeKind.LLVMFloatTypeKind,

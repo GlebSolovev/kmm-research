@@ -11,6 +11,7 @@ import llvm.LLVMWriteBitcodeToFile
 import org.jetbrains.kotlin.backend.common.LoggingContext
 import org.jetbrains.kotlin.backend.konan.*
 import org.jetbrains.kotlin.backend.konan.NativeGenerationState
+import org.jetbrains.kotlin.backend.konan.aopass.changeAtomicOrdering
 import org.jetbrains.kotlin.backend.konan.checkLlvmModuleExternalCalls
 import org.jetbrains.kotlin.backend.konan.createLTOFinalPipelineConfig
 import org.jetbrains.kotlin.backend.konan.driver.BasicPhaseContext
@@ -58,6 +59,17 @@ internal val RewriteExternalCallsCheckerGlobals = createSimpleNamedCompilerPhase
         postactions = getDefaultLlvmModuleActions(),
 ) { context, _ ->
     addFunctionsListSymbolForChecker(context)
+}
+
+internal val ChangeAtomicOrderingPhase = createSimpleNamedCompilerPhase<NativeGenerationState, Unit>(
+        name = "ChangeAtomicOrdering",
+        description = "Change atomic ordering of load/store accesses",
+        postactions = getDefaultLlvmModuleActions(),
+) { context, _ ->
+    changeAtomicOrdering(
+        module = context.llvm.module,
+        llvmTargetData = context.runtime.targetData
+    )
 }
 
 internal class OptimizationState(

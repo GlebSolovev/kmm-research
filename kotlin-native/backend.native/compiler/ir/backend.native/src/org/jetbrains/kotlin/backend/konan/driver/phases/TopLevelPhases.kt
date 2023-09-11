@@ -254,6 +254,7 @@ internal fun PhaseEngine<NativeGenerationState>.compileModule(module: IrModuleFr
     if (checkExternalCalls) {
         runPhase(CheckExternalCallsPhase)
     }
+    runPhase(ChangeAtomicOrderingPhase)
     newEngine(context as BitcodePostProcessingContext) { it.runBitcodePostProcessing() }
     if (checkExternalCalls) {
         runPhase(RewriteExternalCallsCheckerGlobals)
