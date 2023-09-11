@@ -87,6 +87,9 @@ if [ "$only_build_mode" == true ]; then
     exit 0
 fi
 
+# current workaround for konanVersion property bug
+run_args+=("-PkonanVersion=1.9.0")
+
 # run full benchmark and save the result into kotlin-native/performance/build directory
 echo RUN "$pass_name" BENCHMARK
 cd kotlin-native/performance

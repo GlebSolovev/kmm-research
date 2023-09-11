@@ -186,10 +186,11 @@ public class K2JSCompiler extends CLICompiler<K2JSCompilerArguments> {
 
         LanguageVersionSettings languageVersionSettings = CommonConfigurationKeysKt.getLanguageVersionSettings(configuration);
 
-        if (!arguments.getForceDeprecatedLegacyCompilerUsage() && languageVersionSettings.getLanguageVersion().compareTo(LanguageVersion.KOTLIN_1_9) >= 0) {
-            messageCollector.report(ERROR, "Old Kotlin/JS compiler is no longer supported. Please migrate to the new JS IR backend", null);
-            return COMPILATION_ERROR;
-        }
+        // NOTE: Current workaround to make build of 1.9.0 benchmarks successful
+        // if (!arguments.getForceDeprecatedLegacyCompilerUsage() && languageVersionSettings.getLanguageVersion().compareTo(LanguageVersion.KOTLIN_1_9) >= 0) {
+        //     messageCollector.report(ERROR, "Old Kotlin/JS compiler is no longer supported. Please migrate to the new JS IR backend", null);
+        //     return COMPILATION_ERROR;
+        // }
 
         if (arguments.getFreeArgs().isEmpty() && (!incrementalCompilationIsEnabledForJs(arguments))) {
             if (arguments.getVersion()) {
