@@ -27,6 +27,19 @@
 //     return sizeInBits != 0L && (sizeInBits and (sizeInBits - 1)) == 0L
 // }
 
+// private fun LLVMValueRef.replaceOrdering(to: LLVMAtomicOrdering): Boolean {
+//     LLVMSetOrdering(this, to)
+//     return true
+// }
+
+// private fun LLVMValueRef.replaceOrdering(from: LLVMAtomicOrdering, to: LLVMAtomicOrdering): Boolean {
+//     if (LLVMGetOrdering(this) == from) {
+//         LLVMSetOrdering(this, to)
+//         return true
+//     }
+//     return false
+// }
+
 // internal fun changeAtomicOrdering(module: LLVMModuleRef, llvmTargetData: LLVMTargetDataRef) {
 //     var replacedAccessesCount = 0
 
