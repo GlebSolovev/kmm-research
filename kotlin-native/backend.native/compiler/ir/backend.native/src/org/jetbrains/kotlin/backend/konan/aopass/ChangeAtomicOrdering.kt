@@ -6,11 +6,7 @@
 package org.jetbrains.kotlin.backend.konan.aopass
 
 import llvm.*
-import org.jetbrains.kotlin.backend.konan.BitcodePostProcessingContext
 import org.jetbrains.kotlin.backend.konan.llvm.*
-import org.jetbrains.kotlin.backend.konan.llvm.getBasicBlocks
-import org.jetbrains.kotlin.backend.konan.llvm.getFunctions
-import org.jetbrains.kotlin.backend.konan.llvm.getInstructions
 
 private fun isLoadOrStoreInst(inst: LLVMValueRef): Boolean = 
         LLVMIsALoadInst(inst) != null || LLVMIsAStoreInst(inst) != null
@@ -27,20 +23,11 @@ private fun isPowerOfTwoSized(inst: LLVMValueRef, llvmTargetData: LLVMTargetData
     return sizeInBits != 0L && (sizeInBits and (sizeInBits - 1)) == 0L
 }
 
-private fun LLVMValueRef.replaceOrdering(to: LLVMAtomicOrdering): Boolean {
-    LLVMSetOrdering(this, to)
-    return true
-}
-
-private fun LLVMValueRef.replaceOrdering(from: LLVMAtomicOrdering, to: LLVMAtomicOrdering): Boolean {
-    if (LLVMGetOrdering(this) == from) {
-        LLVMSetOrdering(this, to)
-        return true
-    }
-    return false
-}
-
-internal fun changeAtomicOrdering(module: LLVMModuleRef, llvmTargetData: LLVMTargetDataRef) {
+internal fun changeAtomicOrdering(
+    module: LLVMModuleRef,
+    llvmTargetData: LLVMTargetDataRef,
+    mode: AtomicOrderingPassMode
+) {
     var replacedAccessesCount = 0
 
     getFunctions(module)
@@ -54,7 +41,10 @@ internal fun changeAtomicOrdering(module: LLVMModuleRef, llvmTargetData: LLVMTar
                         && isByteSized(inst, llvmTargetData)
                         && isPowerOfTwoSized(inst, llvmTargetData)
             }
-            .forEach { _ -> }
+            .forEach { inst ->
+                val replaced = mode.replaceOrdering(inst)
+                if (replaced) replacedAccessesCount++
+            }
 
     println("[aopass] replaced accesses: $replacedAccessesCount")
 }

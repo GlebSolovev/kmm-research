@@ -5,12 +5,15 @@
 
 package org.jetbrains.kotlin.backend.konan
 
+import org.jetbrains.kotlin.backend.konan.aopass.AtomicOrderingPassMode
 import org.jetbrains.kotlin.config.CompilerConfigurationKey
 import org.jetbrains.kotlin.konan.target.CompilerOutputKind
 
 class KonanConfigKeys {
     companion object {
         // Keep the list lexically sorted.
+        val AOPASS_MODE: CompilerConfigurationKey<AtomicOrderingPassMode>
+                = CompilerConfigurationKey.create("atomic ordering pass mode")
         val BUNDLE_ID: CompilerConfigurationKey<String>
                 = CompilerConfigurationKey.create("bundle ID to be set in Info.plist of a produced framework")
         val CHECK_DEPENDENCIES: CompilerConfigurationKey<Boolean>

@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.cli.common.config.kotlinSourceRoots
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity.*
 import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.ir.linkage.partial.setupPartialLinkageConfig
+import org.jetbrains.kotlin.backend.konan.aopass.AtomicOrderingPassMode
 import org.jetbrains.kotlin.konan.file.File
 import org.jetbrains.kotlin.konan.target.CompilerOutputKind
 import org.jetbrains.kotlin.konan.util.visibleName
@@ -56,6 +57,10 @@ fun CompilerConfiguration.setupFromArguments(arguments: K2NativeCompilerArgument
             (arguments.produce ?: "program").uppercase())
     put(PRODUCE, outputKind)
     put(METADATA_KLIB, arguments.metadataKlib)
+
+    val aopassMode = AtomicOrderingPassMode.valueOf(
+            (arguments.aopassMode ?: "baseline").uppercase())
+    put(AOPASS_MODE, aopassMode)
 
     arguments.libraryVersion?.let { put(LIBRARY_VERSION, it) }
 

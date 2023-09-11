@@ -23,6 +23,8 @@ import org.jetbrains.kotlin.konan.util.visibleName
 import org.jetbrains.kotlin.library.metadata.resolver.TopologicalLibraryOrder
 import org.jetbrains.kotlin.util.removeSuffixIfPresent
 
+import org.jetbrains.kotlin.backend.konan.aopass.AtomicOrderingPassMode
+
 enum class IrVerificationMode {
     NONE,
     WARNING,
@@ -217,6 +219,8 @@ class KonanConfig(val project: Project, val configuration: CompilerConfiguration
     internal val produce get() = configuration.get(KonanConfigKeys.PRODUCE)!!
 
     internal val metadataKlib get() = configuration.get(KonanConfigKeys.METADATA_KLIB)!!
+
+    internal val aopassMode get() = configuration.get(KonanConfigKeys.AOPASS_MODE)!!
 
     internal val produceStaticFramework get() = configuration.getBoolean(KonanConfigKeys.STATIC_FRAMEWORK)
 

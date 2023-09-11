@@ -128,6 +128,13 @@ class K2NativeCompilerArguments : CommonCompilerArguments() {
     // Keep the list lexically sorted.
 
     @Argument(
+        value = "-Xaopass-mode",
+        valueDescription = "{baseline|unordered|monotonic|seq_const|all_to_not_atomic|all_to_seq_const}",
+        description = "Specify atomic ordering pass mode"
+    )
+    var aopassMode: String? = null
+
+    @Argument(
         value = "-Xbundle-id",
         valueDescription = "<id>",
         description = "Bundle ID to be set in Info.plist of a produced framework. Deprecated. Please use -Xbinary=bundleId=<id>."

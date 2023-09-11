@@ -11,6 +11,7 @@ fun copyK2NativeCompilerArguments(from: K2NativeCompilerArguments, to: K2NativeC
     copyCommonCompilerArguments(from, to)
 
     to.allocator = from.allocator
+    to.aopassMode = from.aopassMode
     to.autoCacheDir = from.autoCacheDir
     to.autoCacheableFrom = from.autoCacheableFrom?.copyOf()
     to.backendThreads = from.backendThreads

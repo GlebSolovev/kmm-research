@@ -254,7 +254,11 @@ internal fun PhaseEngine<NativeGenerationState>.compileModule(module: IrModuleFr
     if (checkExternalCalls) {
         runPhase(CheckExternalCallsPhase)
     }
-    runPhase(ChangeAtomicOrderingPhase)
+    runPhase(ChangeAtomicOrderingPhase, ChangeAtomicOrderingInput(
+        llvmModule = context.llvm.module,
+        llvmTargetData = context.runtime.targetData,
+        mode = context.config.aopassMode
+    ))
     newEngine(context as BitcodePostProcessingContext) { it.runBitcodePostProcessing() }
     if (checkExternalCalls) {
         runPhase(RewriteExternalCallsCheckerGlobals)
