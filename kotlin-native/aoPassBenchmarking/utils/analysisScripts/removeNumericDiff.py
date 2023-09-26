@@ -4,10 +4,8 @@ import argparse
 from typing import List, Tuple
 import re
 
-# usage: ./removeNumericDiff.py -i input-file-with-diff -o output-file-to-write-cleared-diff-to
+# usage: ./removeNumericDiff.py -i input_file_with_diff -o output_file_to_write_cleared_diff_to
 # example: ./removeNumericDiff.py -i bincode-diff.asm -o bincode-diff-cleared.asm
-
-# Helper functions
 
 
 def is_diff_line(line: str) -> bool:

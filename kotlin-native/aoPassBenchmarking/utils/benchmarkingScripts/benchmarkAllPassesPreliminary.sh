@@ -1,20 +1,22 @@
 #!/usr/bin/env bash
 set -e
 
+# build tooling ones
+./buildCompiler -f
+./buildBenchmarksAnalyzer.sh
+
 echo STARTED ALL PASSES BENCHMARKING
 echo
 
-./runPassBenchmark.sh "baseline2" "baseline.kt"
-./runPassBenchmark.sh "baseline3" "baseline.kt"
+./runAopassBenchmarks.sh baseline2 baseline
+./runAopassBenchmarks.sh baseline3 baseline
 # at this point, the environment is highly likely stable
-./runPassBenchmark.sh "unordered"
-./runPassBenchmark.sh "monotonic"
-./runPassBenchmark.sh "seq"
-./runPassBenchmark.sh "baseline"
-./runPassBenchmark.sh "all-to-seq"
-./runPassBenchmark.sh "all-to-not-atomic"
-
-./buildBenchmarksAnalyzer.sh
+./runAopassBenchmarks.sh unordered
+./runAopassBenchmarks.sh monotonic
+./runAopassBenchmarks.sh seq seq_const
+./runAopassBenchmarks.sh baseline
+./runAopassBenchmarks.sh all-to-seq all_to_seq_const
+./runAopassBenchmarks.sh all-to-not-atomic all_to_not_atomic
 
 # target comparisons
 ./compareResults.sh baseline2 baseline
@@ -29,5 +31,5 @@ echo
 ./compareResults.sh all-to-not-atomic baseline
 ./compareResults.sh all-to-seq all-to-not-atomic
 
-echo FINISHED ALL PASSES BENCHMARKING
+echo SUCCESSFULLY FINISHED ALL PASSES BENCHMARKING
 echo

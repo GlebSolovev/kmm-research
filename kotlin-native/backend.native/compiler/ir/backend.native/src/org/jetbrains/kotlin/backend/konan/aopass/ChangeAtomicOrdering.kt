@@ -46,5 +46,5 @@ internal fun changeAtomicOrdering(
                 if (replaced) replacedAccessesCount++
             }
 
-    println("[aopass] replaced accesses: $replacedAccessesCount")
+    println("[aopass] mode: $mode, replaced accesses: $replacedAccessesCount")
 }

@@ -2,7 +2,7 @@
 
 import argparse
 
-# usage: ./extractFunctionCode.py -p function-declaration-line-pattern -i file-to-search-at -o file-to-write-output-to
+# usage: ./extractFunctionCode.py -p function_declaration_line_pattern -i file_to_search_at -o file_to_write_output_to
 # example: ./extractFunctionCode.py -p 'define internal fastcc void @"kfun:#main(){}' -i ../testOnSmallProject/analyze-bitcode-tmp-files-dir/analyzed.ll -o extractedCode.ll
 
 

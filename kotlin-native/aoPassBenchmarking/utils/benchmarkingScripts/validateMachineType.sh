@@ -1,7 +1,14 @@
 #!/usr/bin/env bash
 set -e
 
-# usage in scripts: is_mac=$(./validateMachineType.sh)
+# usage: ./validateMachineType.sh ["quiet" | "-q"]
+# example:
+#   ./validateMachineType.sh quiet
+#   ./validateMachineType.sh -q
+# in scripts:
+#   is_mac=$(./validateMachineType.sh)
+
+quiet=$1
 
 getMachineType() {
     # code is borrowed from https://stackoverflow.com/a/3466183
@@ -29,4 +36,11 @@ else
     exit 1
 fi
 
-echo "$is_mac"
+if [ "$quiet" == "quiet" ] || [ "$quiet" == "-q" ]; then
+    exit 0
+elif [ "$quiet" == "" ]; then
+    echo "$is_mac"
+else
+    echo "invalid quiet argument"
+    exit 1
+fi

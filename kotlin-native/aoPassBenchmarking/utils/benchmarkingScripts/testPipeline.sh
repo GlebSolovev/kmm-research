@@ -4,9 +4,13 @@ set -e
 test() {
     test_name="test"
 
-    # benchmark baseline compiler on a pair of test
-    ./runPassBenchmark.sh $test_name baseline.kt 5 :ring:konanRun "--filter=ForLoops.intArrayLoop,ClassList.copy"
+    # build fresh compiler
+    ./buildCompiler.sh -f
 
+    # benchmark baseline compiler on a pair of test
+    ./runAopassBenchmarks.sh $test_name baseline 5 :ring:konanRun "--filter=ForLoops.intArrayLoop,ClassList.copy"
+
+    # build analyzer tool
     ./buildBenchmarksAnalyzer.sh
 
     # compile comparison (the no difference comparison is expected)
@@ -18,5 +22,5 @@ echo
 
 test
 
-echo FINISHED TEST BENCHMARKING
+echo SUCCESSFULLY FINISHED TEST BENCHMARKING
 echo
