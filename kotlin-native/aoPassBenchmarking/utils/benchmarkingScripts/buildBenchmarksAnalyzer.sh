@@ -5,14 +5,13 @@ set -e
 
 is_mac=$(./validateMachineType.sh)
 
+echo PREPARING TO BUILD BENCHMARKS-ANALYZER
+
+# compiler should be built (it may be already)
+./buildCompiler.sh
+
+# build necessary libs (most likely, they are already built due to `:bundle` build above)
 root_dir="../../../../"
-
-echo "STARTED benchmarksAnalyzer build"
-echo
-
-# we want to build analyzer tool using a standard compiler
-./runPassBenchmark.sh baseline-build baseline.kt BUILD_ONLY
-
 cd $root_dir
 if [ "$is_mac" == true ]; then
     ./gradlew macos_arm64PlatformLibs
@@ -20,8 +19,10 @@ if [ "$is_mac" == true ]; then
 else
     ./gradlew linux_x64PlatformLibs
 fi
+echo
+
+echo BUILDING BENCHMARKS-ANALYZER
 cd kotlin-native/tools/benchmarksAnalyzer
 ../../../gradlew build
-
-echo "FINISHED benchmarksAnalyzer build"
+echo BENCHMARKS-ANALYZER IS SUCCESSFULLY BUILT
 echo

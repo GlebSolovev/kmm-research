@@ -15,21 +15,48 @@ Besides, "aopass" in the text simply stands for "atomic ordering pass".
 * All scripts are expected to be executed only from the [benchmarkingScripts](./) directory.
 * All scripts can be run on both *Linux x64* and *MacOS Arm64* machines, described in the [RESEARCH_MACHINES.md](../../benchmarkReports/RESEARCH_MACHINES.md). However, scripts should be manulally verified before using on another machines.
 
-## Build and run aopass benchmarks: [`runPassBenchmark.sh`](./runPassBenchmark.sh)
+## Build the Kotlin/Native compiler: [`buildCompiler.sh`](./buildCompiler.sh)
 
-Runs specified benchmark tests for the specified aopass configuration and saves their results in the [`kotlin-native/performance/build`](../../../performance/build/) directory.
-* The aopass configarion can be the configuration of the baseline compiler.
-* It is also possible to use this script only to build the compiler.
+Builds the compiler, optionally doing cleanup beforehand.
 
-### Usage 
+### Usage
 
 ```bash
-./runPassBenchmark.sh "$pass_name" ["$pass_template_filename"] ["BUILD_ONLY" | "$attempts_number"] ["$test_task"] ["$filter_tests"]
+./buildCompiler.sh ["fresh" | "-f"]
 ```
-* `$pass_name` is the name of the aopass configuration, which will be used in the resulting report name: `"$pass_name".json` in the [`kotlin-native/performance/build`](../../../performance/build/) directory.
-  * If it is the single argument present, then all benchmarks in the configuration correspoding to `$pass_name.kt"` from the [`passTemplates`](../passTemplates) directory will be executed.
-* `$pass_template_filename` specifies the atomic ordering pass configuration that will override the default `$pass_name.kt` from the [`passTemplates`](../passTemplates) directory. Moreover, its code should be commented to prevent unexpected build failure.
-* When `"BUILD_ONLY"` is specified, then the script only builds the compiler in the specified aopass configuration. Otherwise, `$attempts_number` defines the number of attempts to run each benchmarking test before evaluating their average result. The default number of attempts is `20`.
+* When either `"fresh"` or `"-f"` are specified, the script performs cleanup before starting the build. In this case, the compiler build can be called *fresh*, that is, fully consistent with the project code for sure. 
+
+*Hint:* however, in most situations, Gradle performs build correctly without any cleanup.
+
+### Examples
+* Simply builds the compiler.
+    ```bash
+    ./buildCompiler.sh
+    ```
+* Builds the compiler, but with cleanup beforehand.
+    ```bash
+    ./buildCompiler.sh -f
+    ```
+
+## Run aopass benchmarks: [`runAopassBenchmarks.sh`](./runAopassBenchmark.sh)
+
+Runs specified benchmark tests for the specified aopass configuration and saves their results in the [`kotlin-native/performance/build`](../../../performance/build/) directory.
+
+*Hint:* the aopass configuration can also be a baseline compiler.
+
+### Usage
+
+```bash
+./runAopassBenchmarks.sh $run_name [$aopass_mode] [$attempts_number] [$test_task] [$filter_tests]
+```
+```bash
+# available $aopass_mode-s:
+"baseline" | "unordered" | "monotonic" | "seq_const" | "all_to_not_atomic" | "all_to_seq_const"
+```
+* `$run_name` is the tag of the run, which will be used in the resulting report name: `"$run_name".json` in the [`kotlin-native/performance/build`](../../../performance/build/) directory.
+  * If it is the single argument present, then it should correspond to one of the valid `$aopass_mode`-s. Then all benchmarks in this configuration will be executed.
+* `$aopass_mode` specifies the atomic ordering pass configuration that will be used by the compiler. Although you can read more about available modes in [README.md](../../README.md), `$aopass_mode` means all *NotAtomic* orderings will be replaced with ones specified in the mode's name.
+* `$attempts_number` defines the number of attempts to run each benchmarking test before evaluating their average result. The default number of attempts is `20`.
 * `$test_task` defines the gradle task to run the benchmarks. The default one is `:konanRun` that runs all the benchmarking tests. Examples of other options are `:cinterop:konanRun` and `:ring:konanRun`, that run [`Cinterop`](../../../performance/cinterop/src/main/kotlin-native/org/jetbrains/cinteropBenchmarks/) and [`Ring`](../../../performance/ring/src/main/kotlin/org/jetbrains/ring/) test suites respectively.
 * `$filter_tests` defines the filter to be applied to the tests' names to run only the chosen ones. Besides, this argument should be specified in the form of the flag. There are two options:
   * `"--filter=..."` specifies the exact names of the tests;
@@ -41,33 +68,29 @@ Runs specified benchmark tests for the specified aopass configuration and saves 
 
 ### Examples
 
-* Runs all benchmarks for the [`passTemplates/unordered.kt`](../passTemplates/unordered.kt) aopass configuration with `20` attempts for each test and saves results to the `unordered.json`.
+* Runs all benchmarks for the `unordered` aopass configuration with `20` attempts for each test and saves results to the `unordered.json`.
     ```bash
-    ./runPassBenchmark.sh unordered
+    ./runAopassBenchmarks.sh unordered
     ```
-* Runs all benchmarks for the [baseline compiler](../passTemplates/baseline.kt) configuration with `20` attempts for each test and saves results to the `baseline2.json`.
+* Runs all benchmarks for the `baseline` compiler with `20` attempts for each test and saves results to the `baseline2.json`.
     ```bash
-    ./runPassBenchmark.sh baseline2 baseline.kt
+    ./runAopassBenchmarks.sh baseline2 baseline
     ```
-* Only builds the compiler in the [baseline](../passTemplates/baseline.kt) configuration. The `$pass_name` here is not used.
+* Runs all benchmarks for the `baseline` compiler with `30` attempts for each test and saves results to the `30-attempts.json`.
     ```bash
-    ./runPassBenchmark.sh baseline-build baseline.kt BUILD_ONLY
+    ./runAopassBenchmarks.sh 30-attempts baseline 30
     ```
-* Runs all benchmarks for the [baseline compiler](../passTemplates/baseline.kt) configuration with `30` attempts for each test and saves results to the `30-attempts.json`.
+* Runs the `Cinterop` test suite for the `baseline` compiler with `30` attempts for each test and saves results to the `30-attempts-cinterop.json`.
     ```bash
-    ./runPassBenchmark.sh 30-attempts baseline.kt 30
-    ```
-* Runs the `Cinterop` test suite for the [baseline compiler](../passTemplates/baseline.kt) configuration with `30` attempts for each test and saves results to the `30-attempts-cinterop.json`.
-    ```bash
-    ./runPassBenchmark.sh 30-attempts-cinterop baseline.kt 30 :cinterop:konanRun
+    ./runAopassBenchmarks.sh 30-attempts-cinterop baseline 30 :cinterop:konanRun
     ```
 * The same as in example above, but only `Cinterop:int` and `Cinterop:boxedInt` tests are being run.
   ```bash
-  ./runPassBenchmark.sh 30-attempts-cinterop baseline.kt 30 :cinterop:konanRun --filter=int,boxedInt
+  ./runAopassBenchmarks.sh 30-attempts-cinterop baseline 30 :cinterop:konanRun --filter=int,boxedInt
   ```
-* Runs all the `Ring` suite test, whose names start with `MultithreadedLoops.`, for the [baseline compiler](../passTemplates/baseline.kt) configuration with `30` attempts for each test and saves results to the `30-attempts-multithreading.json`.
+* Runs all the `Ring` suite test, whose names start with `MultithreadedLoops.`, for the `baseline` compiler with `30` attempts for each test and saves results to the `30-attempts-multithreading.json`.
     ``` bash
-    ./runPassBenchmark.sh 30-attempts-multithreading baseline.kt 30 :ring:konanRun --filterRegex=MultithreadedLoops.*
+    ./runAopassBenchmarks.sh 30-attempts-multithreading baseline.kt 30 :ring:konanRun --filterRegex=MultithreadedLoops.*
     ```
 
 ## Build the `benchmarksAnalyzer` tool: [`buildBenchmarksAnalyzer.sh`](./buildBenchmarksAnalyzer.sh)

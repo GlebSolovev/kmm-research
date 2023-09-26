@@ -3,7 +3,7 @@ set -e
 
 # usage: ./compileTests.sh
 
-# TODO: list should be updated after updated benchmarks run
+# WARNING: list is relevant only in terms of the original research repo version (~ Kotlin 1.7.21)
 tests=(
     # Linux slowdowns
     # 20-...%
@@ -88,17 +88,8 @@ else
     machine_name="linuxX64"
 fi
 
-buildConf() {
-    conf=$1
-    cd ../benchmarkingScripts
-    ./runPassBenchmark.sh "$conf"-build "$conf".kt BUILD_ONLY
-    cd ../analysisScripts
-}
-
 compileTestsInConfiguration() {
     conf_name=$1
-    buildConf "$conf_name"
-
     echo "--------------------------------"
     echo
 
@@ -171,6 +162,11 @@ compileDiff() {
     echo "COMPILED diff for all tests"
     echo
 }
+
+# build compiler once
+cd ../benchmarkingScripts
+./buildCompiler.sh -f
+cd ../analysisScripts
 
 compileTestsInConfiguration baseline
 compileTestsInConfiguration unordered

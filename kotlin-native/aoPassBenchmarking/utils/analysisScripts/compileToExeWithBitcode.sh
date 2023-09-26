@@ -3,7 +3,7 @@ set -e
 
 # usage: ./compileToExeWithBitcode.sh source_file.kt output_exe_directory output_bitcode_directory
 # example:
-# ./extractMainBitcode.sh Main.kt output output/bitcode
+#   ./extractMainBitcode.sh Main.kt output output/bitcode
 
 source_file=$1
 output_exe_dir=$2

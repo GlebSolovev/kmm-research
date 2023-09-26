@@ -6,19 +6,21 @@ measureUnordered() {
     baseline_name="x2-size-30-attempts-baseline-${index}"
     unordered_name="x2-size-30-attempts-unordered-${index}"
 
-    echo STARTED ITERATION \#"$index"
+    echo STARTED BASELINE-VS-UNORDERED ITERATION \#"$index"
 
     # run compiler configurations
-    ./runPassBenchmark.sh "$baseline_name" "baseline.kt" "30"
-    ./runPassBenchmark.sh "$unordered_name" "unordered.kt" "30"
-
-    ./buildBenchmarksAnalyzer.sh
+    ./runAopassBenchmarks.sh "$baseline_name" "baseline" "30"
+    ./runAopassBenchmarks.sh "$unordered_name" "unordered" "30"
 
     # compile comparison
     ./compareResults.sh "$unordered_name" "$baseline_name"
 
     echo FINISHED ITERATION \#"$index"
 }
+
+# build tooling ones
+./buildCompiler -f
+./buildBenchmarksAnalyzer.sh
 
 echo STARTED BASELINE-VS-UNORDERED BENCHMARKING
 echo
@@ -27,5 +29,5 @@ for i in {1..20}; do
     measureUnordered "$i"
 done
 
-echo FINISHED BASELINE-VS-UNORDERED BENCHMARKING
+echo SUCCESSFULLY FINISHED BASELINE-VS-UNORDERED BENCHMARKING
 echo
