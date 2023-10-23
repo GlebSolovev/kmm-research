@@ -17,6 +17,7 @@ def extract(func_name: str, rec_depth: int, bitcode: str) -> List[str]:
     functions = {f.name: f for f in mod.functions}
     # extracted global variables
     gvs = {func_name: functions[func_name]}
+    # TODO: handle func_name absence properly
 
     work_queue = deque([gv for _, gv in gvs.items() if gv.is_function])
     for _ in range(rec_depth):
@@ -30,7 +31,7 @@ def extract(func_name: str, rec_depth: int, bitcode: str) -> List[str]:
                 cf_name = list(i.operands)[-1].name
                 if cf_name in gvs:
                     continue
-                print(cf_name)
+                print(cf_name) # TODO: support logging by flag
                 cf = functions[cf_name]
                 gvs[cf_name] = cf
                 work_queue.append(cf)
@@ -44,7 +45,7 @@ def parse(bitcode: str) -> llvm.ModuleRef:
     return mod
 
 
-class LlvmManager():
+class LlvmNativeManager():
     def __init__(self, codegen: bool = False, print: bool = False) -> None:
         self.codegen = codegen
         self.print = print
@@ -93,7 +94,7 @@ args = parser.parse_args()
 with open(args.input, 'r') as input_file:
     bitcode = input_file.read()
 
-with LlvmManager(print=True):
+with LlvmNativeManager(print=True):
     extracted_symbols = extract(args.function, args.recursive, bitcode)
 
 with open(args.output, 'w') as output_file:
